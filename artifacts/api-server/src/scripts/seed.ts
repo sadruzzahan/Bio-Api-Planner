@@ -91,10 +91,10 @@ async function seed() {
     { provider: "apple_health", category: "platform", status: "connected" },
     { provider: "google_fit", category: "platform", status: "connected" },
     { provider: "cronometer", category: "nutrition", status: "connected" },
-    { provider: "myfitnesspal", category: "nutrition", status: "disconnected" },
+    { provider: "myfitnesspal", category: "nutrition", status: "connected" },
     { provider: "philips_hue", category: "smart_home", status: "connected" },
     { provider: "google_calendar", category: "calendar", status: "connected" },
-    { provider: "amazon_alexa", category: "smart_home", status: "disconnected" },
+    { provider: "amazon_alexa", category: "smart_home", status: "connected" },
   ];
   for (const i of integrationData) {
     await db.insert(integrationsTable).values({

@@ -10,13 +10,15 @@ import {
 } from "@workspace/db";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { GetInsightsResponse } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
+
+type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
 interface InsightCard {
-  id: string;
+  id: UUID;
   title: string;
   body: string;
   category: string;
@@ -24,10 +26,10 @@ interface InsightCard {
   createdAt: Date;
 }
 
-async function generateInsights(userId: number): Promise<InsightCard[]> {
+export async function generateInsightCards(userId: number): Promise<InsightCard[]> {
   const d7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [biometrics, sleep, glucose, activity, state] = await Promise.all([
+  const [biometrics, sleep, glucose, activity, stateRows] = await Promise.all([
     db.select().from(biometricReadingsTable)
       .where(and(eq(biometricReadingsTable.userId, userId), gte(biometricReadingsTable.recordedAt, d7)))
       .orderBy(desc(biometricReadingsTable.recordedAt)).limit(50),
@@ -46,7 +48,7 @@ async function generateInsights(userId: number): Promise<InsightCard[]> {
   ]);
 
   const context = JSON.stringify({
-    currentState: state[0] ?? null,
+    currentState: stateRows[0] ?? null,
     recentBiometrics: biometrics.slice(0, 20),
     sleepSessions: sleep,
     glucoseReadings: glucose.slice(0, 20),
@@ -59,9 +61,9 @@ async function generateInsights(userId: number): Promise<InsightCard[]> {
     messages: [
       {
         role: "user",
-        content: `You are a biological intelligence system. Analyze the following 7-day biometric context and generate exactly 3 insight cards. Each card must be a JSON object with: title (short, action-oriented), body (2-3 sentences with specific numbers from the data), category (one of: recovery, sleep, glucose, activity, stress, metabolic), severity (one of: info, warning, critical).
+        content: `You are a biological intelligence system. Analyze the following 7-day biometric context and generate exactly 3 insight cards. Each card must be a JSON object with: title (short, action-oriented, max 8 words), body (2-3 sentences with specific numbers from the data), category (one of: recovery, sleep, glucose, activity, stress, metabolic), severity (one of: info, warning, critical).
 
-Return ONLY a JSON array of 3 objects. No other text.
+Return ONLY a JSON array of exactly 3 objects, nothing else.
 
 Context: ${context}`,
       },
@@ -70,34 +72,41 @@ Context: ${context}`,
 
   const text = message.content[0]?.type === "text" ? message.content[0].text : "[]";
 
-  let cards: Omit<InsightCard, "id" | "createdAt">[] = [];
+  let raw: Omit<InsightCard, "id" | "createdAt">[] = [];
   try {
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) cards = JSON.parse(jsonMatch[0]);
+    if (jsonMatch) raw = JSON.parse(jsonMatch[0]);
   } catch {
-    cards = [
-      {
-        title: "Biometric analysis complete",
-        body: "Your biometric data has been processed. Continue logging for deeper insights.",
-        category: "recovery",
-        severity: "info",
-      },
-    ];
+    // fallback below
   }
 
   const now = new Date();
-  return cards.slice(0, 3).map((c) => ({
+  const cards = raw.slice(0, 3).map((c) => ({
     id: randomUUID(),
-    title: c.title || "Insight",
-    body: c.body || "",
-    category: c.category || "recovery",
-    severity: c.severity || "info",
+    title: String(c.title || "Biometric Insight"),
+    body: String(c.body || ""),
+    category: String(c.category || "recovery"),
+    severity: String(c.severity || "info"),
     createdAt: now,
   }));
+
+  // Ensure we always return exactly 3 cards with deterministic fallbacks
+  const fallbacks: InsightCard[] = [
+    { id: randomUUID(), title: "Continue logging for deeper insights", body: "More biometric data will unlock pattern-based recommendations.", category: "recovery", severity: "info", createdAt: now },
+    { id: randomUUID(), title: "Sleep quality tracking active", body: "Your sleep sessions are being monitored and analyzed.", category: "sleep", severity: "info", createdAt: now },
+    { id: randomUUID(), title: "Glucose monitoring nominal", body: "Continuous glucose data is being collected for trend analysis.", category: "glucose", severity: "info", createdAt: now },
+  ];
+
+  while (cards.length < 3) {
+    cards.push(fallbacks[cards.length]!);
+  }
+
+  return cards;
 }
 
 router.get("/insights", async (req, res): Promise<void> => {
-  const insights = await generateInsights(DEMO_USER_ID);
+  const userId = await getDemoUserId();
+  const insights = await generateInsightCards(userId);
   res.json(GetInsightsResponse.parse(insights));
 });
 

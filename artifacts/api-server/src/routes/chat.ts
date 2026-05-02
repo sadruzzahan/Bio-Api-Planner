@@ -13,9 +13,9 @@ import {
   GetChatHistoryQueryParams,
   GetChatHistoryResponse,
 } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 const SYSTEM_PROMPT = `You are an elite personal biological intelligence agent. You have real-time access to the user's biometric data: HRV, sleep quality, glucose levels, activity strain, and multi-dimensional biological state classifications.
 
@@ -29,6 +29,7 @@ Your role:
 You are NOT a general wellness chatbot. You are a precision optimization engine with access to real biological data.`;
 
 router.post("/chat", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const body = SendChatMessageBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
@@ -39,15 +40,15 @@ router.post("/chat", async (req, res): Promise<void> => {
 
   const [recentMessages, [currentState], recentBiometrics] = await Promise.all([
     db.select().from(chatMessagesTable)
-      .where(eq(chatMessagesTable.userId, DEMO_USER_ID))
+      .where(eq(chatMessagesTable.userId, userId))
       .orderBy(desc(chatMessagesTable.createdAt))
       .limit(10),
     db.select().from(biologicalStatesTable)
-      .where(eq(biologicalStatesTable.userId, DEMO_USER_ID))
+      .where(eq(biologicalStatesTable.userId, userId))
       .orderBy(desc(biologicalStatesTable.computedAt))
       .limit(1),
     db.select().from(biometricReadingsTable)
-      .where(and(eq(biometricReadingsTable.userId, DEMO_USER_ID), gte(biometricReadingsTable.recordedAt, h24)))
+      .where(and(eq(biometricReadingsTable.userId, userId), gte(biometricReadingsTable.recordedAt, h24)))
       .orderBy(desc(biometricReadingsTable.recordedAt))
       .limit(30),
   ]);
@@ -59,7 +60,7 @@ router.post("/chat", async (req, res): Promise<void> => {
 
   const [userMsg] = await db
     .insert(chatMessagesTable)
-    .values({ userId: DEMO_USER_ID, role: "user", content: body.data.message })
+    .values({ userId, role: "user", content: body.data.message })
     .returning();
 
   const chatHistory = recentMessages.reverse().map((m) => ({
@@ -83,12 +84,14 @@ router.post("/chat", async (req, res): Promise<void> => {
   });
 
   const assistantText =
-    aiResponse.content[0]?.type === "text" ? aiResponse.content[0].text : "I was unable to process that request.";
+    aiResponse.content[0]?.type === "text"
+      ? aiResponse.content[0].text
+      : "I was unable to process that request.";
 
   const [assistantMsg] = await db
     .insert(chatMessagesTable)
     .values({
-      userId: DEMO_USER_ID,
+      userId,
       role: "assistant",
       content: assistantText,
       contextSnapshot: { state: currentState ?? null, biometricsCount: recentBiometrics.length },
@@ -99,6 +102,7 @@ router.post("/chat", async (req, res): Promise<void> => {
 });
 
 router.get("/chat/history", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const q = GetChatHistoryQueryParams.safeParse(req.query);
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
@@ -107,7 +111,7 @@ router.get("/chat/history", async (req, res): Promise<void> => {
   const rows = await db
     .select()
     .from(chatMessagesTable)
-    .where(eq(chatMessagesTable.userId, DEMO_USER_ID))
+    .where(eq(chatMessagesTable.userId, userId))
     .orderBy(asc(chatMessagesTable.createdAt))
     .limit(q.data.limit);
   res.json(GetChatHistoryResponse.parse(rows));

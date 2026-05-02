@@ -8,23 +8,28 @@ import {
 } from "@workspace/api-zod";
 import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
+import { getDemoUserId } from "../lib/demo-user";
+import { coerceDateFields } from "../lib/query-dates";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 router.get("/state/current", async (req, res): Promise<void> => {
-  const state = await classifyBiologicalState(DEMO_USER_ID);
-  await planInterventions(DEMO_USER_ID, state);
+  const userId = await getDemoUserId();
+  const state = await classifyBiologicalState(userId);
+  await planInterventions(userId, state);
   res.json(GetCurrentStateResponse.parse(state));
 });
 
 router.get("/state/history", async (req, res): Promise<void> => {
-  const q = GetStateHistoryQueryParams.safeParse(req.query);
+  const userId = await getDemoUserId();
+  const q = GetStateHistoryQueryParams.safeParse(
+    coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
+  );
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
     return;
   }
-  const conditions = [eq(biologicalStatesTable.userId, DEMO_USER_ID)];
+  const conditions = [eq(biologicalStatesTable.userId, userId)];
   if (q.data.from) conditions.push(gte(biologicalStatesTable.computedAt, q.data.from));
   if (q.data.to) conditions.push(lte(biologicalStatesTable.computedAt, q.data.to));
   const rows = await db

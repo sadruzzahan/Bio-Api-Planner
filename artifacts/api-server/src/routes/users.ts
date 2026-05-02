@@ -6,13 +6,13 @@ import {
   UpdateCurrentUserBody,
   UpdateCurrentUserResponse,
 } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
 
-const DEMO_USER_ID = 1;
-
 router.get("/users/me", async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, DEMO_USER_ID));
+  const userId = await getDemoUserId();
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
@@ -21,6 +21,7 @@ router.get("/users/me", async (req, res): Promise<void> => {
 });
 
 router.patch("/users/me", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const parsed = UpdateCurrentUserBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -29,7 +30,7 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   const [user] = await db
     .update(usersTable)
     .set(parsed.data)
-    .where(eq(usersTable.id, DEMO_USER_ID))
+    .where(eq(usersTable.id, userId))
     .returning();
   if (!user) {
     res.status(404).json({ error: "User not found" });

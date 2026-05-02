@@ -13,37 +13,40 @@ import {
 import { GetDashboardResponse } from "@workspace/api-zod";
 import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
-import { randomUUID } from "crypto";
+import { generateInsightCards } from "./insights";
+import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 router.get("/dashboard", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const h24 = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, DEMO_USER_ID));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
     return;
   }
 
-  const state = await classifyBiologicalState(DEMO_USER_ID);
-  await planInterventions(DEMO_USER_ID, state);
+  const state = await classifyBiologicalState(userId);
+  await planInterventions(userId, state);
 
-  const [biometrics, lastSleep, glucoseRows, activityRows, pendingRows] = await Promise.all([
-    db.select().from(biometricReadingsTable)
-      .where(and(eq(biometricReadingsTable.userId, DEMO_USER_ID), gte(biometricReadingsTable.recordedAt, h24))),
-    db.select().from(sleepSessionsTable)
-      .where(eq(sleepSessionsTable.userId, DEMO_USER_ID))
-      .orderBy(desc(sleepSessionsTable.date)).limit(1),
-    db.select().from(glucoseReadingsTable)
-      .where(and(eq(glucoseReadingsTable.userId, DEMO_USER_ID), gte(glucoseReadingsTable.recordedAt, h24))),
-    db.select().from(activitySessionsTable)
-      .where(and(eq(activitySessionsTable.userId, DEMO_USER_ID), gte(activitySessionsTable.recordedAt, h24))),
-    db.select().from(interventionsTable)
-      .where(and(eq(interventionsTable.userId, DEMO_USER_ID), eq(interventionsTable.status, "pending")))
-      .orderBy(desc(interventionsTable.triggeredAt)).limit(3),
-  ]);
+  const [biometrics, lastSleep, glucoseRows, activityRows, pendingRows, recentInsights] =
+    await Promise.all([
+      db.select().from(biometricReadingsTable)
+        .where(and(eq(biometricReadingsTable.userId, userId), gte(biometricReadingsTable.recordedAt, h24))),
+      db.select().from(sleepSessionsTable)
+        .where(eq(sleepSessionsTable.userId, userId))
+        .orderBy(desc(sleepSessionsTable.date)).limit(1),
+      db.select().from(glucoseReadingsTable)
+        .where(and(eq(glucoseReadingsTable.userId, userId), gte(glucoseReadingsTable.recordedAt, h24))),
+      db.select().from(activitySessionsTable)
+        .where(and(eq(activitySessionsTable.userId, userId), gte(activitySessionsTable.recordedAt, h24))),
+      db.select().from(interventionsTable)
+        .where(and(eq(interventionsTable.userId, userId), eq(interventionsTable.status, "pending")))
+        .orderBy(desc(interventionsTable.triggeredAt)).limit(3),
+      generateInsightCards(userId),
+    ]);
 
   const steps = biometrics.filter((b) => b.metric === "steps").reduce((s, b) => s + b.value, 0);
   const hrReadings = biometrics.filter((b) => b.metric === "heart_rate");
@@ -63,17 +66,6 @@ router.get("/dashboard", async (req, res): Promise<void> => {
   const strainScore = activityRows.length > 0
     ? activityRows.reduce((s, a) => s + a.strainScore, 0) / activityRows.length
     : 0;
-
-  const recentInsights = [
-    {
-      id: randomUUID(),
-      title: `Readiness Score: ${state.readinessScore}/100`,
-      body: `Your current biological state is ${state.recoveryState} recovery with ${state.energyState} energy levels. ${state.notes ?? ""}`,
-      category: "recovery",
-      severity: state.readinessScore >= 70 ? "info" : state.readinessScore >= 50 ? "warning" : "critical",
-      createdAt: new Date(),
-    },
-  ];
 
   res.json(
     GetDashboardResponse.parse({

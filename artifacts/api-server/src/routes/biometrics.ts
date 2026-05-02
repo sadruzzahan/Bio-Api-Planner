@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { and, eq, gte, lte, desc, avg, min, max, sql } from "drizzle-orm";
+import { and, eq, gte, lte, desc, avg, min, max } from "drizzle-orm";
 import { db, biometricReadingsTable } from "@workspace/db";
 import {
   ListBiometricsQueryParams,
@@ -7,18 +7,22 @@ import {
   CreateBiometricBody,
   GetBiometricsSummaryResponse,
 } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
+import { coerceDateFields } from "../lib/query-dates";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 router.get("/biometrics", async (req, res): Promise<void> => {
-  const q = ListBiometricsQueryParams.safeParse(req.query);
+  const userId = await getDemoUserId();
+  const q = ListBiometricsQueryParams.safeParse(
+    coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
+  );
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
     return;
   }
   const { metric, source, from, to, limit } = q.data;
-  const conditions = [eq(biometricReadingsTable.userId, DEMO_USER_ID)];
+  const conditions = [eq(biometricReadingsTable.userId, userId)];
   if (metric) conditions.push(eq(biometricReadingsTable.metric, metric));
   if (source) conditions.push(eq(biometricReadingsTable.source, source));
   if (from) conditions.push(gte(biometricReadingsTable.recordedAt, from));
@@ -34,6 +38,7 @@ router.get("/biometrics", async (req, res): Promise<void> => {
 });
 
 router.post("/biometrics", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const parsed = CreateBiometricBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -41,12 +46,13 @@ router.post("/biometrics", async (req, res): Promise<void> => {
   }
   const [row] = await db
     .insert(biometricReadingsTable)
-    .values({ ...parsed.data, userId: DEMO_USER_ID })
+    .values({ ...parsed.data, userId })
     .returning();
   res.status(201).json(row);
 });
 
 router.get("/biometrics/summary", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const now = new Date();
   const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -55,12 +61,12 @@ router.get("/biometrics/summary", async (req, res): Promise<void> => {
   const metrics = await db
     .selectDistinct({ metric: biometricReadingsTable.metric, unit: biometricReadingsTable.unit })
     .from(biometricReadingsTable)
-    .where(eq(biometricReadingsTable.userId, DEMO_USER_ID));
+    .where(eq(biometricReadingsTable.userId, userId));
 
   const results = await Promise.all(
     metrics.map(async ({ metric, unit }) => {
       const base = and(
-        eq(biometricReadingsTable.userId, DEMO_USER_ID),
+        eq(biometricReadingsTable.userId, userId),
         eq(biometricReadingsTable.metric, metric),
       );
       const [agg7] = await db

@@ -1,23 +1,27 @@
 import { Router, type IRouter } from "express";
-import { and, eq, gte, lte, desc, avg } from "drizzle-orm";
+import { and, eq, gte, lte, desc } from "drizzle-orm";
 import { db, sleepSessionsTable } from "@workspace/db";
 import {
   ListSleepQueryParams,
   ListSleepResponse,
   GetSleepTrendResponse,
 } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
+import { coerceDateFields } from "../lib/query-dates";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 router.get("/sleep", async (req, res): Promise<void> => {
-  const q = ListSleepQueryParams.safeParse(req.query);
+  const userId = await getDemoUserId();
+  const q = ListSleepQueryParams.safeParse(
+    coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
+  );
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
     return;
   }
   const { from, to } = q.data;
-  const conditions = [eq(sleepSessionsTable.userId, DEMO_USER_ID)];
+  const conditions = [eq(sleepSessionsTable.userId, userId)];
   if (from) conditions.push(gte(sleepSessionsTable.onsetAt, from));
   if (to) conditions.push(lte(sleepSessionsTable.wakeAt, to));
   const rows = await db
@@ -29,11 +33,12 @@ router.get("/sleep", async (req, res): Promise<void> => {
 });
 
 router.get("/sleep/trend", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const d30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const rows = await db
     .select()
     .from(sleepSessionsTable)
-    .where(and(eq(sleepSessionsTable.userId, DEMO_USER_ID), gte(sleepSessionsTable.onsetAt, d30)))
+    .where(and(eq(sleepSessionsTable.userId, userId), gte(sleepSessionsTable.onsetAt, d30)))
     .orderBy(sleepSessionsTable.date);
 
   if (rows.length === 0) {
@@ -44,14 +49,9 @@ router.get("/sleep/trend", async (req, res): Promise<void> => {
     return;
   }
 
-  const totalSum = rows.reduce((s, r) => s + r.totalMinutes, 0);
-  const effSum = rows.reduce((s, r) => s + r.efficiencyPct, 0);
-  const deepSum = rows.reduce((s, r) => s + r.deepMinutes, 0);
-  const remSum = rows.reduce((s, r) => s + r.remMinutes, 0);
   const n = rows.length;
+  const avgTotal = rows.reduce((s, r) => s + r.totalMinutes, 0) / n;
   const TARGET_SLEEP_MIN = 480;
-  const avgTotal = totalSum / n;
-  const sleepDebt = Math.max(0, (TARGET_SLEEP_MIN - avgTotal) * n);
 
   const points = rows.map((r) => ({
     date: new Date(r.date),
@@ -64,10 +64,10 @@ router.get("/sleep/trend", async (req, res): Promise<void> => {
 
   res.json(GetSleepTrendResponse.parse({
     avgTotalMinutes: avgTotal,
-    avgEfficiencyPct: effSum / n,
-    avgDeepMinutes: deepSum / n,
-    avgRemMinutes: remSum / n,
-    sleepDebtMinutes: sleepDebt,
+    avgEfficiencyPct: rows.reduce((s, r) => s + r.efficiencyPct, 0) / n,
+    avgDeepMinutes: rows.reduce((s, r) => s + r.deepMinutes, 0) / n,
+    avgRemMinutes: rows.reduce((s, r) => s + r.remMinutes, 0) / n,
+    sleepDebtMinutes: Math.max(0, (TARGET_SLEEP_MIN - avgTotal) * n),
     points,
   }));
 });

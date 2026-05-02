@@ -1,33 +1,6 @@
 import pLimit from "p-limit";
 import pRetry, { AbortError } from "p-retry";
 
-/**
- * Batch Processing Utilities
- *
- * Generic batch processing with built-in rate limiting and automatic retries.
- * Use for any task that requires processing multiple items through an LLM or external API.
- *
- * USAGE:
- * ```typescript
- * import { batchProcess } from "@workspace/integrations-anthropic-ai/batch";
- * import { anthropic } from "@workspace/integrations-anthropic-ai";
- *
- * const results = await batchProcess(
- *   artworks,
- *   async (artwork) => {
- *     const message = await anthropic.messages.create({
- *       model: "claude-sonnet-4-6",
- *       max_tokens: 8192,
- *       messages: [{ role: "user", content: `Categorize: ${artwork.name}` }],
- *     });
- *     const block = message.content[0];
- *     return block.type === "text" ? block.text : "";
- *   },
- *   { concurrency: 2, retries: 5 }
- * );
- * ```
- */
-
 export interface BatchOptions {
   concurrency?: number;
   retries?: number;
@@ -49,7 +22,7 @@ export function isRateLimitError(error: unknown): boolean {
 export async function batchProcess<T, R>(
   items: T[],
   processor: (item: T, index: number) => Promise<R>,
-  options: BatchOptions = {}
+  options: BatchOptions = {},
 ): Promise<R[]> {
   const {
     concurrency = 2,
@@ -75,14 +48,12 @@ export async function batchProcess<T, R>(
             if (isRateLimitError(error)) {
               throw error;
             }
-            throw new AbortError(
-              error instanceof Error ? error : new Error(String(error))
-            );
+            throw new AbortError(error instanceof Error ? error : new Error(String(error)));
           }
         },
-        { retries, minTimeout, maxTimeout, factor: 2 }
-      )
-    )
+        { retries, minTimeout, maxTimeout, factor: 2 },
+      ),
+    ),
   );
 
   return Promise.all(promises);
@@ -92,7 +63,7 @@ export async function batchProcessWithSSE<T, R>(
   items: T[],
   processor: (item: T, index: number) => Promise<R>,
   sendEvent: (event: { type: string; [key: string]: unknown }) => void,
-  options: Omit<BatchOptions, "concurrency" | "onProgress"> = {}
+  options: Omit<BatchOptions, "concurrency" | "onProgress"> = {},
 ): Promise<R[]> {
   const { retries = 5, minTimeout = 1000, maxTimeout = 15000 } = options;
 
@@ -106,22 +77,17 @@ export async function batchProcessWithSSE<T, R>(
     sendEvent({ type: "processing", index, item });
 
     try {
-      const result = await pRetry(
-        () => processor(item, index),
-        {
-          retries,
-          minTimeout,
-          maxTimeout,
-          factor: 2,
-          onFailedAttempt: (error) => {
-            if (!isRateLimitError(error)) {
-              throw new AbortError(
-                error instanceof Error ? error : new Error(String(error))
-              );
-            }
-          },
-        }
-      );
+      const result = await pRetry(() => processor(item, index), {
+        retries,
+        minTimeout,
+        maxTimeout,
+        factor: 2,
+        onFailedAttempt: (error) => {
+          if (!isRateLimitError(error)) {
+            throw new AbortError(error instanceof Error ? error : new Error(String(error)));
+          }
+        },
+      });
       results.push(result);
       sendEvent({ type: "progress", index, result });
     } catch (error) {

@@ -8,17 +8,18 @@ import {
   UpdateInterventionBody,
   UpdateInterventionResponse,
 } from "@workspace/api-zod";
+import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
-const DEMO_USER_ID = 1;
 
 router.get("/interventions", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const q = ListInterventionsQueryParams.safeParse(req.query);
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
     return;
   }
-  const conditions = [eq(interventionsTable.userId, DEMO_USER_ID)];
+  const conditions = [eq(interventionsTable.userId, userId)];
   if (q.data.status) conditions.push(eq(interventionsTable.status, q.data.status));
   const rows = await db
     .select()
@@ -29,6 +30,7 @@ router.get("/interventions", async (req, res): Promise<void> => {
 });
 
 router.patch("/interventions/:id", async (req, res): Promise<void> => {
+  const userId = await getDemoUserId();
   const params = UpdateInterventionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -44,7 +46,7 @@ router.patch("/interventions/:id", async (req, res): Promise<void> => {
   const [row] = await db
     .update(interventionsTable)
     .set(updateData)
-    .where(and(eq(interventionsTable.id, params.data.id), eq(interventionsTable.userId, DEMO_USER_ID)))
+    .where(and(eq(interventionsTable.id, params.data.id), eq(interventionsTable.userId, userId)))
     .returning();
   if (!row) {
     res.status(404).json({ error: "Intervention not found" });
