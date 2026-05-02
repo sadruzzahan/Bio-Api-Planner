@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Biological API"
+version = "1.0.0"
+id = "artifacts/biological-api"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24313
+
+[services.development]
+run = "pnpm --filter @workspace/biological-api run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/biological-api", "run", "build" ]
+publicDir = "artifacts/biological-api/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24313"
+BASE_PATH = "/"
