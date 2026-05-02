@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
@@ -20,6 +21,7 @@ router.get("/meals", async (req, res): Promise<void> => {
     res.status(400).json({ error: q.error.message });
     return;
   }
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const conditions = [eq(mealsTable.userId, userId)];
   if (q.data.from) conditions.push(gte(mealsTable.loggedAt, q.data.from));
   if (q.data.to) conditions.push(lte(mealsTable.loggedAt, q.data.to));
@@ -27,7 +29,9 @@ router.get("/meals", async (req, res): Promise<void> => {
     .select()
     .from(mealsTable)
     .where(and(...conditions))
-    .orderBy(desc(mealsTable.loggedAt));
+    .orderBy(desc(mealsTable.loggedAt))
+    .limit(limit)
+    .offset(offset);
   res.json(ListMealsResponse.parse(rows));
 });
 

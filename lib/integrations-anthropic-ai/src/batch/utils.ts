@@ -9,13 +9,17 @@ export interface BatchOptions {
   onProgress?: (completed: number, total: number, item: unknown) => void;
 }
 
+export type BatchResult<R> =
+  | { ok: true; value: R }
+  | { ok: false; error: string };
+
 export function isRateLimitError(error: unknown): boolean {
-  const errorMsg = error instanceof Error ? error.message : String(error);
+  const msg = error instanceof Error ? error.message : String(error);
   return (
-    errorMsg.includes("429") ||
-    errorMsg.includes("RATELIMIT_EXCEEDED") ||
-    errorMsg.toLowerCase().includes("quota") ||
-    errorMsg.toLowerCase().includes("rate limit")
+    msg.includes("429") ||
+    msg.includes("RATELIMIT_EXCEEDED") ||
+    msg.toLowerCase().includes("quota") ||
+    msg.toLowerCase().includes("rate limit")
   );
 }
 
@@ -35,28 +39,28 @@ export async function batchProcess<T, R>(
   const limit = pLimit(concurrency);
   let completed = 0;
 
-  const promises = items.map((item, index) =>
-    limit(() =>
-      pRetry(
-        async () => {
-          try {
-            const result = await processor(item, index);
-            completed++;
-            onProgress?.(completed, items.length, item);
-            return result;
-          } catch (error: unknown) {
-            if (isRateLimitError(error)) {
-              throw error;
+  return Promise.all(
+    items.map((item, index) =>
+      limit(() =>
+        pRetry(
+          async () => {
+            try {
+              const result = await processor(item, index);
+              completed++;
+              onProgress?.(completed, items.length, item);
+              return result;
+            } catch (error: unknown) {
+              if (isRateLimitError(error)) throw error;
+              throw new AbortError(
+                error instanceof Error ? error : new Error(String(error)),
+              );
             }
-            throw new AbortError(error instanceof Error ? error : new Error(String(error)));
-          }
-        },
-        { retries, minTimeout, maxTimeout, factor: 2 },
+          },
+          { retries, minTimeout, maxTimeout, factor: 2 },
+        ),
       ),
     ),
   );
-
-  return Promise.all(promises);
 }
 
 export async function batchProcessWithSSE<T, R>(
@@ -64,43 +68,41 @@ export async function batchProcessWithSSE<T, R>(
   processor: (item: T, index: number) => Promise<R>,
   sendEvent: (event: { type: string; [key: string]: unknown }) => void,
   options: Omit<BatchOptions, "concurrency" | "onProgress"> = {},
-): Promise<R[]> {
+): Promise<BatchResult<R>[]> {
   const { retries = 5, minTimeout = 1000, maxTimeout = 15000 } = options;
 
   sendEvent({ type: "started", total: items.length });
 
-  const results: R[] = [];
-  let errors = 0;
+  const results: BatchResult<R>[] = [];
 
   for (let index = 0; index < items.length; index++) {
     const item = items[index];
     sendEvent({ type: "processing", index, item });
 
     try {
-      const result = await pRetry(() => processor(item, index), {
+      const value = await pRetry(() => processor(item, index), {
         retries,
         minTimeout,
         maxTimeout,
         factor: 2,
         onFailedAttempt: (error) => {
           if (!isRateLimitError(error)) {
-            throw new AbortError(error instanceof Error ? error : new Error(String(error)));
+            throw new AbortError(
+              error instanceof Error ? error : new Error(String(error)),
+            );
           }
         },
       });
-      results.push(result);
-      sendEvent({ type: "progress", index, result });
+      results.push({ ok: true, value });
+      sendEvent({ type: "progress", index, result: value });
     } catch (error) {
-      errors++;
-      results.push(undefined as R);
-      sendEvent({
-        type: "progress",
-        index,
-        error: error instanceof Error ? error.message : "Processing failed",
-      });
+      const message = error instanceof Error ? error.message : "Processing failed";
+      results.push({ ok: false, error: message });
+      sendEvent({ type: "progress", index, error: message });
     }
   }
 
+  const errors = results.filter((r) => !r.ok).length;
   sendEvent({ type: "complete", processed: items.length, errors });
   return results;
 }

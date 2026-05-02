@@ -4,6 +4,7 @@ import { db, activitySessionsTable } from "@workspace/db";
 import { ListActivityQueryParams, ListActivityResponse } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
@@ -16,6 +17,7 @@ router.get("/activity", async (req, res): Promise<void> => {
     res.status(400).json({ error: q.error.message });
     return;
   }
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const { from, to } = q.data;
   const conditions = [eq(activitySessionsTable.userId, userId)];
   if (from) conditions.push(gte(activitySessionsTable.recordedAt, from));
@@ -24,7 +26,9 @@ router.get("/activity", async (req, res): Promise<void> => {
     .select()
     .from(activitySessionsTable)
     .where(and(...conditions))
-    .orderBy(desc(activitySessionsTable.recordedAt));
+    .orderBy(desc(activitySessionsTable.recordedAt))
+    .limit(limit)
+    .offset(offset);
   res.json(ListActivityResponse.parse(rows));
 });
 

@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
@@ -20,6 +21,7 @@ router.get("/sleep", async (req, res): Promise<void> => {
     res.status(400).json({ error: q.error.message });
     return;
   }
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const { from, to } = q.data;
   const conditions = [eq(sleepSessionsTable.userId, userId)];
   if (from) conditions.push(gte(sleepSessionsTable.onsetAt, from));
@@ -28,7 +30,9 @@ router.get("/sleep", async (req, res): Promise<void> => {
     .select()
     .from(sleepSessionsTable)
     .where(and(...conditions))
-    .orderBy(desc(sleepSessionsTable.date));
+    .orderBy(desc(sleepSessionsTable.date))
+    .limit(limit)
+    .offset(offset);
   res.json(ListSleepResponse.parse(rows));
 });
 

@@ -10,15 +10,19 @@ import {
   DeleteSupplementParams,
 } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/supplements", async (req, res): Promise<void> => {
   const userId = await getDemoUserId();
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const rows = await db
     .select()
     .from(supplementsTable)
-    .where(eq(supplementsTable.userId, userId));
+    .where(eq(supplementsTable.userId, userId))
+    .limit(limit)
+    .offset(offset);
   res.json(ListSupplementsResponse.parse(rows));
 });
 

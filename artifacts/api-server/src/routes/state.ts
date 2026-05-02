@@ -10,6 +10,7 @@ import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
 import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
@@ -29,6 +30,7 @@ router.get("/state/history", async (req, res): Promise<void> => {
     res.status(400).json({ error: q.error.message });
     return;
   }
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const conditions = [eq(biologicalStatesTable.userId, userId)];
   if (q.data.from) conditions.push(gte(biologicalStatesTable.computedAt, q.data.from));
   if (q.data.to) conditions.push(lte(biologicalStatesTable.computedAt, q.data.to));
@@ -37,7 +39,8 @@ router.get("/state/history", async (req, res): Promise<void> => {
     .from(biologicalStatesTable)
     .where(and(...conditions))
     .orderBy(desc(biologicalStatesTable.computedAt))
-    .limit(100);
+    .limit(limit)
+    .offset(offset);
   res.json(GetStateHistoryResponse.parse(rows));
 });
 

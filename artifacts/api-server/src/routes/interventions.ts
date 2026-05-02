@@ -9,6 +9,7 @@ import {
   UpdateInterventionResponse,
 } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
+import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
@@ -19,13 +20,16 @@ router.get("/interventions", async (req, res): Promise<void> => {
     res.status(400).json({ error: q.error.message });
     return;
   }
+  const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const conditions = [eq(interventionsTable.userId, userId)];
   if (q.data.status) conditions.push(eq(interventionsTable.status, q.data.status));
   const rows = await db
     .select()
     .from(interventionsTable)
     .where(and(...conditions))
-    .orderBy(desc(interventionsTable.triggeredAt));
+    .orderBy(desc(interventionsTable.triggeredAt))
+    .limit(limit)
+    .offset(offset);
   res.json(ListInterventionsResponse.parse(rows));
 });
 
