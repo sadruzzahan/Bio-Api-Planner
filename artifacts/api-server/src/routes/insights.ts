@@ -8,7 +8,6 @@ import {
   activitySessionsTable,
   biologicalStatesTable,
 } from "@workspace/db";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { GetInsightsResponse } from "@workspace/api-zod";
 import { getDemoUserId } from "../lib/demo-user";
 import { randomUUID } from "crypto";
@@ -24,6 +23,15 @@ interface InsightCard {
   category: string;
   severity: string;
   createdAt: Date;
+}
+
+function fallbackInsights(): InsightCard[] {
+  const now = new Date();
+  return [
+    { id: randomUUID() as UUID, title: "Continue logging for deeper insights", body: "More biometric data will unlock pattern-based recommendations tailored to your biology.", category: "recovery", severity: "info", createdAt: now },
+    { id: randomUUID() as UUID, title: "Sleep quality tracking active", body: "Your sleep sessions are being monitored and staged for recovery trend analysis.", category: "sleep", severity: "info", createdAt: now },
+    { id: randomUUID() as UUID, title: "Glucose monitoring nominal", body: "Continuous glucose data is being collected and analyzed for daily variability trends.", category: "glucose", severity: "info", createdAt: now },
+  ];
 }
 
 export async function generateInsightCards(userId: number): Promise<InsightCard[]> {
@@ -47,6 +55,14 @@ export async function generateInsightCards(userId: number): Promise<InsightCard[
       .orderBy(desc(biologicalStatesTable.computedAt)).limit(1),
   ]);
 
+  let anthropicClient: { messages: { create: Function } } | null = null;
+  try {
+    const mod = await import("@workspace/integrations-anthropic-ai");
+    anthropicClient = mod.getAnthropicClient();
+  } catch {
+    return fallbackInsights();
+  }
+
   const context = JSON.stringify({
     currentState: stateRows[0] ?? null,
     recentBiometrics: biometrics.slice(0, 20),
@@ -55,53 +71,50 @@ export async function generateInsightCards(userId: number): Promise<InsightCard[
     activitySessions: activity,
   });
 
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8192,
-    messages: [
-      {
-        role: "user",
-        content: `You are a biological intelligence system. Analyze the following 7-day biometric context and generate exactly 3 insight cards. Each card must be a JSON object with: title (short, action-oriented, max 8 words), body (2-3 sentences with specific numbers from the data), category (one of: recovery, sleep, glucose, activity, stress, metabolic), severity (one of: info, warning, critical).
+  try {
+    const message = await anthropicClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      messages: [
+        {
+          role: "user",
+          content: `You are a biological intelligence system. Analyze the following 7-day biometric context and generate exactly 3 insight cards. Each card must be a JSON object with: title (short, action-oriented, max 8 words), body (2-3 sentences with specific numbers from the data), category (one of: recovery, sleep, glucose, activity, stress, metabolic), severity (one of: info, warning, critical).
 
 Return ONLY a JSON array of exactly 3 objects, nothing else.
 
 Context: ${context}`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  const text = message.content[0]?.type === "text" ? message.content[0].text : "[]";
+    const text = message.content[0]?.type === "text" ? message.content[0].text : "[]";
+    let raw: Omit<InsightCard, "id" | "createdAt">[] = [];
+    try {
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (jsonMatch) raw = JSON.parse(jsonMatch[0]);
+    } catch {
+      return fallbackInsights();
+    }
 
-  let raw: Omit<InsightCard, "id" | "createdAt">[] = [];
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) raw = JSON.parse(jsonMatch[0]);
+    const now = new Date();
+    const cards: InsightCard[] = raw.slice(0, 3).map((c) => ({
+      id: randomUUID() as UUID,
+      title: String(c.title || "Biometric Insight"),
+      body: String(c.body || ""),
+      category: String(c.category || "recovery"),
+      severity: String(c.severity || "info"),
+      createdAt: now,
+    }));
+
+    const fallbacks = fallbackInsights();
+    while (cards.length < 3) {
+      cards.push(fallbacks[cards.length]!);
+    }
+
+    return cards;
   } catch {
-    // fallback below
+    return fallbackInsights();
   }
-
-  const now = new Date();
-  const cards = raw.slice(0, 3).map((c) => ({
-    id: randomUUID(),
-    title: String(c.title || "Biometric Insight"),
-    body: String(c.body || ""),
-    category: String(c.category || "recovery"),
-    severity: String(c.severity || "info"),
-    createdAt: now,
-  }));
-
-  // Ensure we always return exactly 3 cards with deterministic fallbacks
-  const fallbacks: InsightCard[] = [
-    { id: randomUUID(), title: "Continue logging for deeper insights", body: "More biometric data will unlock pattern-based recommendations.", category: "recovery", severity: "info", createdAt: now },
-    { id: randomUUID(), title: "Sleep quality tracking active", body: "Your sleep sessions are being monitored and analyzed.", category: "sleep", severity: "info", createdAt: now },
-    { id: randomUUID(), title: "Glucose monitoring nominal", body: "Continuous glucose data is being collected for trend analysis.", category: "glucose", severity: "info", createdAt: now },
-  ];
-
-  while (cards.length < 3) {
-    cards.push(fallbacks[cards.length]!);
-  }
-
-  return cards;
 }
 
 router.get("/insights", async (req, res): Promise<void> => {

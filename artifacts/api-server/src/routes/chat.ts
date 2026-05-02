@@ -6,7 +6,6 @@ import {
   biologicalStatesTable,
   biometricReadingsTable,
 } from "@workspace/db";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
 import {
   SendChatMessageBody,
   SendChatMessageResponse,
@@ -53,15 +52,33 @@ router.post("/chat", async (req, res): Promise<void> => {
       .limit(30),
   ]);
 
-  const contextBlock = JSON.stringify({
-    currentBiologicalState: currentState ?? null,
-    last24hBiometrics: recentBiometrics,
-  });
-
   const [userMsg] = await db
     .insert(chatMessagesTable)
     .values({ userId, role: "user", content: body.data.message })
     .returning();
+
+  let anthropicClient: { messages: { create: Function } } | null = null;
+  try {
+    const mod = await import("@workspace/integrations-anthropic-ai");
+    anthropicClient = mod.getAnthropicClient();
+  } catch {
+    const [assistantMsg] = await db
+      .insert(chatMessagesTable)
+      .values({
+        userId,
+        role: "assistant",
+        content: "AI assistant is not available — please provision the Anthropic integration.",
+        contextSnapshot: {},
+      })
+      .returning();
+    res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
+    return;
+  }
+
+  const contextBlock = JSON.stringify({
+    currentBiologicalState: currentState ?? null,
+    last24hBiometrics: recentBiometrics,
+  });
 
   const chatHistory = recentMessages.reverse().map((m) => ({
     role: m.role as "user" | "assistant",
@@ -76,29 +93,42 @@ router.post("/chat", async (req, res): Promise<void> => {
     },
   ];
 
-  const aiResponse = await anthropic.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8192,
-    system: SYSTEM_PROMPT,
-    messages: aiMessages,
-  });
+  try {
+    const aiResponse = await anthropicClient.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      system: SYSTEM_PROMPT,
+      messages: aiMessages,
+    });
 
-  const assistantText =
-    aiResponse.content[0]?.type === "text"
-      ? aiResponse.content[0].text
-      : "I was unable to process that request.";
+    const assistantText =
+      aiResponse.content[0]?.type === "text"
+        ? aiResponse.content[0].text
+        : "I was unable to process that request.";
 
-  const [assistantMsg] = await db
-    .insert(chatMessagesTable)
-    .values({
-      userId,
-      role: "assistant",
-      content: assistantText,
-      contextSnapshot: { state: currentState ?? null, biometricsCount: recentBiometrics.length },
-    })
-    .returning();
+    const [assistantMsg] = await db
+      .insert(chatMessagesTable)
+      .values({
+        userId,
+        role: "assistant",
+        content: assistantText,
+        contextSnapshot: { state: currentState ?? null, biometricsCount: recentBiometrics.length },
+      })
+      .returning();
 
-  res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
+    res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
+  } catch {
+    const [assistantMsg] = await db
+      .insert(chatMessagesTable)
+      .values({
+        userId,
+        role: "assistant",
+        content: "I encountered an error processing your request. Please try again.",
+        contextSnapshot: {},
+      })
+      .returning();
+    res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
+  }
 });
 
 router.get("/chat/history", async (req, res): Promise<void> => {
