@@ -3,20 +3,32 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Biological API — programmable optimization interface for human biology
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: users
+  - name: biometrics
+  - name: sleep
+  - name: glucose
+  - name: activity
+  - name: state
+  - name: interventions
+  - name: meals
+  - name: supplements
+  - name: integrations
+  - name: dashboard
+  - name: insights
+  - name: chat
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +36,815 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateCurrentUser
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /biometrics:
+    get:
+      operationId: listBiometrics
+      tags: [biometrics]
+      summary: List biometric readings
+      parameters:
+        - in: query
+          name: metric
+          schema: { type: string }
+        - in: query
+          name: source
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 200, maximum: 1000 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BiometricReading"
+    post:
+      operationId: createBiometric
+      tags: [biometrics]
+      summary: Create a manual biometric reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBiometricBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiometricReading"
+
+  /biometrics/summary:
+    get:
+      operationId: getBiometricsSummary
+      tags: [biometrics]
+      summary: 7-day and 30-day aggregate per metric
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BiometricSummary"
+
+  /sleep:
+    get:
+      operationId: listSleep
+      tags: [sleep]
+      summary: List sleep sessions
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SleepSession"
+
+  /sleep/trend:
+    get:
+      operationId: getSleepTrend
+      tags: [sleep]
+      summary: 30-day sleep trend
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SleepTrend"
+
+  /glucose:
+    get:
+      operationId: listGlucose
+      tags: [glucose]
+      summary: List glucose readings
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: mealContext
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GlucoseReading"
+
+  /glucose/trend:
+    get:
+      operationId: getGlucoseTrend
+      tags: [glucose]
+      summary: Glucose trend (daily averages, variability)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlucoseTrend"
+
+  /activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: List activity sessions
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivitySession"
+
+  /state/current:
+    get:
+      operationId: getCurrentState
+      tags: [state]
+      summary: Current biological state classification
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BiologicalState"
+
+  /state/history:
+    get:
+      operationId: getStateHistory
+      tags: [state]
+      summary: Biological state history
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BiologicalState"
+
+  /interventions:
+    get:
+      operationId: listInterventions
+      tags: [interventions]
+      summary: List interventions
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Intervention"
+
+  /interventions/{id}:
+    patch:
+      operationId: updateIntervention
+      tags: [interventions]
+      summary: Update intervention status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInterventionBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Intervention"
+
+  /meals:
+    get:
+      operationId: listMeals
+      tags: [meals]
+      summary: List meal log
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meal"
+    post:
+      operationId: createMeal
+      tags: [meals]
+      summary: Log a meal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMealBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meal"
+
+  /supplements:
+    get:
+      operationId: listSupplements
+      tags: [supplements]
+      summary: Supplement stack
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Supplement"
+    post:
+      operationId: createSupplement
+      tags: [supplements]
+      summary: Add a supplement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSupplementBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplement"
+
+  /supplements/{id}:
+    patch:
+      operationId: updateSupplement
+      tags: [supplements]
+      summary: Update a supplement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSupplementBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Supplement"
+    delete:
+      operationId: deleteSupplement
+      tags: [supplements]
+      summary: Remove a supplement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+
+  /integrations:
+    get:
+      operationId: listIntegrations
+      tags: [integrations]
+      summary: List integrations
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Integration"
+
+  /integrations/{provider}/connect:
+    post:
+      operationId: connectIntegration
+      tags: [integrations]
+      summary: Initiate or simulate a connection
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+
+  /integrations/{provider}:
+    delete:
+      operationId: disconnectIntegration
+      tags: [integrations]
+      summary: Disconnect an integration
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Integration"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Composite dashboard payload
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /insights:
+    get:
+      operationId: getInsights
+      tags: [insights]
+      summary: AI insight cards
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Insight"
+
+  /chat:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a chat message and get AI response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendChatBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+
+  /chat/history:
+    get:
+      operationId: getChatHistory
+      tags: [chat]
+      summary: Recent chat messages
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, maximum: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+      required: [status]
 
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+        tier: { type: string }
+        chronotype: { type: string }
+        primaryGoal: { type: string }
+        onboardedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, email, name, tier, chronotype, primaryGoal, createdAt]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name: { type: string }
+        tier: { type: string }
+        chronotype: { type: string }
+        primaryGoal: { type: string }
+
+    BiometricReading:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        source: { type: string }
+        metric: { type: string }
+        value: { type: number }
+        unit: { type: string }
+        recordedAt: { type: string, format: date-time }
+      required: [id, userId, source, metric, value, unit, recordedAt]
+
+    CreateBiometricBody:
+      type: object
+      properties:
+        source: { type: string }
+        metric: { type: string }
+        value: { type: number }
+        unit: { type: string }
+        recordedAt: { type: string, format: date-time }
+      required: [source, metric, value, unit, recordedAt]
+
+    BiometricSummary:
+      type: object
+      properties:
+        metric: { type: string }
+        unit: { type: string }
+        last24hAvg: { type: number, nullable: true }
+        sevenDayAvg: { type: number, nullable: true }
+        thirtyDayAvg: { type: number, nullable: true }
+        sevenDayMin: { type: number, nullable: true }
+        sevenDayMax: { type: number, nullable: true }
+        trendPct: { type: number, nullable: true }
+        latest: { type: number, nullable: true }
+        latestAt: { type: string, format: date-time, nullable: true }
+      required: [metric, unit]
+
+    SleepSession:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        source: { type: string }
+        date: { type: string, format: date }
+        totalMinutes: { type: integer }
+        deepMinutes: { type: integer }
+        remMinutes: { type: integer }
+        lightMinutes: { type: integer }
+        awakeMinutes: { type: integer }
+        efficiencyPct: { type: number }
+        onsetAt: { type: string, format: date-time }
+        wakeAt: { type: string, format: date-time }
+      required: [id, userId, source, date, totalMinutes, deepMinutes, remMinutes, lightMinutes, awakeMinutes, efficiencyPct, onsetAt, wakeAt]
+
+    SleepTrendPoint:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        totalMinutes: { type: integer }
+        deepMinutes: { type: integer }
+        remMinutes: { type: integer }
+        lightMinutes: { type: integer }
+        efficiencyPct: { type: number }
+      required: [date, totalMinutes, deepMinutes, remMinutes, lightMinutes, efficiencyPct]
+
+    SleepTrend:
+      type: object
+      properties:
+        avgTotalMinutes: { type: number }
+        avgEfficiencyPct: { type: number }
+        avgDeepMinutes: { type: number }
+        avgRemMinutes: { type: number }
+        sleepDebtMinutes: { type: number }
+        points:
+          type: array
+          items: { $ref: "#/components/schemas/SleepTrendPoint" }
+      required: [avgTotalMinutes, avgEfficiencyPct, avgDeepMinutes, avgRemMinutes, sleepDebtMinutes, points]
+
+    GlucoseReading:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        source: { type: string }
+        valueMgdl: { type: number }
+        mealContext: { type: string }
+        recordedAt: { type: string, format: date-time }
+      required: [id, userId, source, valueMgdl, mealContext, recordedAt]
+
+    GlucoseTrendPoint:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        avgMgdl: { type: number }
+        minMgdl: { type: number }
+        maxMgdl: { type: number }
+        variabilityPct: { type: number }
+      required: [date, avgMgdl, minMgdl, maxMgdl, variabilityPct]
+
+    GlucoseTrend:
+      type: object
+      properties:
+        avgMgdl: { type: number }
+        variabilityPct: { type: number }
+        timeInRangePct: { type: number }
+        peakMgdl: { type: number }
+        troughMgdl: { type: number }
+        points:
+          type: array
+          items: { $ref: "#/components/schemas/GlucoseTrendPoint" }
+      required: [avgMgdl, variabilityPct, timeInRangePct, peakMgdl, troughMgdl, points]
+
+    ActivitySession:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        source: { type: string }
+        type: { type: string }
+        durationMinutes: { type: integer }
+        intensity: { type: string }
+        strainScore: { type: number }
+        avgHeartRate: { type: integer, nullable: true }
+        calories: { type: integer, nullable: true }
+        recordedAt: { type: string, format: date-time }
+      required: [id, userId, source, type, durationMinutes, intensity, strainScore, recordedAt]
+
+    BiologicalState:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        computedAt: { type: string, format: date-time }
+        energyState: { type: string }
+        recoveryState: { type: string }
+        cognitiveState: { type: string }
+        stressState: { type: string }
+        metabolicState: { type: string }
+        readinessScore: { type: integer }
+        notes: { type: string, nullable: true }
+      required: [id, userId, computedAt, energyState, recoveryState, cognitiveState, stressState, metabolicState, readinessScore]
+
+    Intervention:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        type: { type: string }
+        title: { type: string }
+        action: { type: string }
+        rationale: { type: string }
+        status: { type: string }
+        triggeredAt: { type: string, format: date-time }
+        executedAt: { type: string, format: date-time, nullable: true }
+        payload: { type: object, additionalProperties: true }
+      required: [id, userId, type, title, action, rationale, status, triggeredAt, payload]
+
+    UpdateInterventionBody:
+      type: object
+      properties:
+        status: { type: string }
+      required: [status]
+
+    Meal:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        loggedAt: { type: string, format: date-time }
+        description: { type: string }
+        glycemicImpact: { type: string }
+        calories: { type: integer }
+        carbsG: { type: number }
+        proteinG: { type: number }
+        fatG: { type: number }
+        source: { type: string }
+      required: [id, userId, loggedAt, description, glycemicImpact, calories, carbsG, proteinG, fatG, source]
+
+    CreateMealBody:
+      type: object
+      properties:
+        loggedAt: { type: string, format: date-time }
+        description: { type: string }
+        glycemicImpact: { type: string }
+        calories: { type: integer }
+        carbsG: { type: number }
+        proteinG: { type: number }
+        fatG: { type: number }
+        source: { type: string }
+      required: [loggedAt, description, glycemicImpact, calories, carbsG, proteinG, fatG]
+
+    Supplement:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        name: { type: string }
+        doseMg: { type: number }
+        timing: { type: string }
+        active: { type: boolean }
+        recommendedByAi: { type: boolean }
+        rationale: { type: string, nullable: true }
+      required: [id, userId, name, doseMg, timing, active, recommendedByAi]
+
+    CreateSupplementBody:
+      type: object
+      properties:
+        name: { type: string }
+        doseMg: { type: number }
+        timing: { type: string }
+      required: [name, doseMg, timing]
+
+    UpdateSupplementBody:
+      type: object
+      properties:
+        name: { type: string }
+        doseMg: { type: number }
+        timing: { type: string }
+        active: { type: boolean }
+
+    Integration:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        provider: { type: string }
+        category: { type: string }
+        status: { type: string }
+        connectedAt: { type: string, format: date-time, nullable: true }
+        metadata: { type: object, additionalProperties: true }
+      required: [id, userId, provider, category, status, metadata]
+
+    DashboardSummary:
+      type: object
+      properties:
+        steps: { type: integer }
+        avgHeartRate: { type: integer }
+        sleepMinutes: { type: integer }
+        sleepEfficiencyPct: { type: number }
+        glucoseAvgMgdl: { type: number }
+        glucoseRangeMgdl: { type: number }
+        activeMinutes: { type: integer }
+        strainScore: { type: number }
+      required: [steps, avgHeartRate, sleepMinutes, sleepEfficiencyPct, glucoseAvgMgdl, glucoseRangeMgdl, activeMinutes, strainScore]
+
+    Dashboard:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        state: { $ref: "#/components/schemas/BiologicalState" }
+        summary: { $ref: "#/components/schemas/DashboardSummary" }
+        pendingInterventions:
+          type: array
+          items: { $ref: "#/components/schemas/Intervention" }
+        recentInsights:
+          type: array
+          items: { $ref: "#/components/schemas/Insight" }
+      required: [user, state, summary, pendingInterventions, recentInsights]
+
+    Insight:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        body: { type: string }
+        category: { type: string }
+        severity: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, title, body, category, severity, createdAt]
+
+    SendChatBody:
+      type: object
+      properties:
+        message: { type: string }
+      required: [message]
+
+    ChatMessage:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        role: { type: string }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
+      required: [id, userId, role, content, createdAt]
+
+    ChatResponse:
+      type: object
+      properties:
+        userMessage: { $ref: "#/components/schemas/ChatMessage" }
+        assistantMessage: { $ref: "#/components/schemas/ChatMessage" }
+      required: [userMessage, assistantMessage]

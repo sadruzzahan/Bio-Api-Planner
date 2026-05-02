@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface CreateBiometricBody {
+  source: string;
+  metric: string;
+  value: number;
+  unit: string;
+  recordedAt: Date;
 }

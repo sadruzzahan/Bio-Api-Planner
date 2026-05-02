@@ -6,6 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type ListBiometricsParams = {
+  metric?: string;
+  source?: string;
+  from?: Date;
+  to?: Date;
+  /**
+   * @maximum 1000
+   */
+  limit?: number;
+};

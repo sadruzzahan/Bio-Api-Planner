@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface GlucoseReading {
+  id: number;
+  userId: number;
+  source: string;
+  valueMgdl: number;
+  mealContext: string;
+  recordedAt: Date;
 }

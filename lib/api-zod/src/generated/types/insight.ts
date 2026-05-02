@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface Insight {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  severity: string;
+  createdAt: Date;
 }

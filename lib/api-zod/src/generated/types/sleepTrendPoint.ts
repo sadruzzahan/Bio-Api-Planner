@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface SleepTrendPoint {
+  date: Date;
+  totalMinutes: number;
+  deepMinutes: number;
+  remMinutes: number;
+  lightMinutes: number;
+  efficiencyPct: number;
 }

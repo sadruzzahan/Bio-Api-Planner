@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface GlucoseTrendPoint {
+  date: Date;
+  avgMgdl: number;
+  minMgdl: number;
+  maxMgdl: number;
+  variabilityPct: number;
 }
