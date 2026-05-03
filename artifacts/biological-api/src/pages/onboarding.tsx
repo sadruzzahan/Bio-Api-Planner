@@ -1,87 +1,217 @@
-import { Link } from "wouter";
+import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Activity, ShieldCheck, Database, Zap, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Activity, Target, Wifi, Clock, Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const WEARABLES = [
+  { id: "whoop", label: "WHOOP" },
+  { id: "oura", label: "Oura Ring" },
+  { id: "garmin", label: "Garmin" },
+  { id: "apple_health", label: "Apple Health" },
+  { id: "fitbit", label: "Fitbit" },
+  { id: "none", label: "None yet" },
+];
+
+const CHRONOTYPES = [
+  { id: "early_bird", label: "Early Bird", sub: "Natural peak before noon" },
+  { id: "intermediate", label: "Intermediate", sub: "Peak mid-day, flexible" },
+  { id: "night_owl", label: "Night Owl", sub: "Natural peak after 8pm" },
+  { id: "dolphin", label: "Dolphin", sub: "Light sleeper, irregular schedule" },
+];
 
 export default function Onboarding() {
+  const [, navigate] = useLocation();
+  const [step, setStep] = useState(0);
+  const [goal, setGoal] = useState("");
+  const [wearable, setWearable] = useState("");
+  const [chronotype, setChronotype] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleFinish = () => {
+    setLoading(true);
+    setTimeout(() => navigate("/dashboard"), 2500);
+  };
+
+  const steps = [
+    {
+      id: "goals",
+      title: "Define Mission Objective",
+      subtitle: "What do you want to optimize?",
+      icon: Target,
+    },
+    {
+      id: "wearable",
+      title: "Connect Telemetry",
+      subtitle: "Which device will supply your data?",
+      icon: Wifi,
+    },
+    {
+      id: "chronotype",
+      title: "Chronotype Profile",
+      subtitle: "When does your body naturally perform best?",
+      icon: Clock,
+    },
+    {
+      id: "assessment",
+      title: "Initializing System",
+      subtitle: "Running your first biological assessment...",
+      icon: Activity,
+    },
+  ];
+
+  const canAdvance = () => {
+    if (step === 0) return goal.trim().length > 3;
+    if (step === 1) return wearable !== "";
+    if (step === 2) return chronotype !== "";
+    return true;
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Decorative grid */}
-      <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(rgba(0,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px]" />
-      
-      <div className="flex-1 flex flex-col items-center justify-center container mx-auto px-6 py-12 relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <div className="w-20 h-20 bg-primary/10 border border-primary/30 flex items-center justify-center text-primary mb-8 mx-auto">
-            <Activity className="w-10 h-10" />
-          </div>
-        </motion.div>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(0,184,212,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,184,212,0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-center max-w-2xl mx-auto mb-16"
-        >
-          <h1 className="text-4xl md:text-5xl font-mono font-bold uppercase tracking-tight mb-4">
-            System Initialization
-          </h1>
-          <p className="text-muted-foreground font-mono text-lg">
-            Welcome to BioOS. Your mission control for human optimization. Connect your telemetry sources to begin.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mx-auto mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="bg-card border border-border p-6"
-          >
-            <Database className="w-8 h-8 text-primary mb-4" />
-            <h3 className="font-mono font-bold uppercase mb-2">Ingest Data</h3>
-            <p className="text-sm text-muted-foreground font-mono">Connect wearables and continuous monitors to stream metrics.</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="bg-card border border-border p-6"
-          >
-            <Zap className="w-8 h-8 text-primary mb-4" />
-            <h3 className="font-mono font-bold uppercase mb-2">Identify Patterns</h3>
-            <p className="text-sm text-muted-foreground font-mono">AI-driven insights analyzing correlation between sleep, strain, and glucose.</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="bg-card border border-border p-6"
-          >
-            <ShieldCheck className="w-8 h-8 text-primary mb-4" />
-            <h3 className="font-mono font-bold uppercase mb-2">Execute Interventions</h3>
-            <p className="text-sm text-muted-foreground font-mono">Receive actionable protocols to shift your biological state.</p>
-          </motion.div>
+      <div className="w-full max-w-lg px-6 relative z-10">
+        <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase mb-12 justify-center">
+          <Activity className="w-6 h-6" />
+          <span className="text-xl">BioOS</span>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-        >
-          <Link href="/dashboard">
-            <Button size="lg" className="h-14 px-8 font-mono uppercase tracking-widest bg-primary text-primary-foreground hover:bg-primary/90 rounded-none border border-transparent hover:border-primary transition-all group" data-testid="btn-enter-dashboard">
-              Enter Mission Control
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </Link>
-        </motion.div>
+        <div className="flex items-center gap-2 mb-8 justify-center">
+          {steps.map((s, i) => (
+            <div key={s.id} className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
+                i < step ? "bg-primary text-primary-foreground" :
+                i === step ? "border-2 border-primary text-primary" :
+                "border border-border text-muted-foreground"
+              }`}>
+                {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`h-px w-8 transition-all ${i < step ? "bg-primary" : "bg-border"}`} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait">
+          {!loading ? (
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+              className="bg-card border border-border p-8 space-y-6"
+            >
+              <div>
+                <h2 className="text-2xl font-mono font-bold uppercase tracking-tight">{steps[step].title}</h2>
+                <p className="text-muted-foreground font-mono text-sm mt-2">{steps[step].subtitle}</p>
+              </div>
+
+              {step === 0 && (
+                <div className="space-y-3">
+                  {["Maximize athletic performance", "Improve sleep quality", "Stabilize glucose & metabolic health", "Reduce stress and improve recovery"].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setGoal(opt)}
+                      className={`w-full text-left px-4 py-3 border rounded-md font-mono text-sm transition-all ${
+                        goal === opt ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                      }`}
+                      data-testid={`opt-goal-${opt.toLowerCase().replace(/ /g, "-")}`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                  <Input
+                    className="font-mono bg-background border-border mt-2"
+                    placeholder="Or describe your own goal..."
+                    value={["Maximize athletic performance", "Improve sleep quality", "Stabilize glucose & metabolic health", "Reduce stress and improve recovery"].includes(goal) ? "" : goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    data-testid="input-custom-goal"
+                  />
+                </div>
+              )}
+
+              {step === 1 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {WEARABLES.map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setWearable(w.id)}
+                      className={`px-4 py-3 border rounded-md font-mono text-sm text-left transition-all ${
+                        wearable === w.id ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40 text-muted-foreground"
+                      }`}
+                      data-testid={`opt-wearable-${w.id}`}
+                    >
+                      {w.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-3">
+                  {CHRONOTYPES.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setChronotype(c.id)}
+                      className={`w-full text-left px-4 py-3 border rounded-md transition-all ${
+                        chronotype === c.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"
+                      }`}
+                      data-testid={`opt-chronotype-${c.id}`}
+                    >
+                      <div className={`font-mono font-bold text-sm ${chronotype === c.id ? "text-primary" : "text-foreground"}`}>{c.label}</div>
+                      <div className="font-mono text-xs text-muted-foreground mt-0.5">{c.sub}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-2">
+                {step > 0 ? (
+                  <Button variant="ghost" size="sm" onClick={() => setStep(s => s - 1)} className="font-mono text-xs uppercase" data-testid="btn-back">
+                    <ArrowLeft className="w-3 h-3 mr-2" /> Back
+                  </Button>
+                ) : <div />}
+                <Button
+                  onClick={() => step < 2 ? setStep(s => s + 1) : handleFinish()}
+                  disabled={!canAdvance()}
+                  className="font-mono uppercase tracking-wider"
+                  data-testid="btn-next"
+                >
+                  {step < 2 ? "Continue" : "Launch System"}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-card border border-border p-12 flex flex-col items-center justify-center gap-6 text-center"
+            >
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <div>
+                <h2 className="text-xl font-mono font-bold uppercase tracking-tight">Running First Assessment</h2>
+                <p className="text-muted-foreground font-mono text-sm mt-2">Calibrating your biological baseline...</p>
+              </div>
+              <div className="w-full bg-border rounded-full h-1 overflow-hidden">
+                <motion.div
+                  className="h-full bg-primary"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 2.3, ease: "linear" }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

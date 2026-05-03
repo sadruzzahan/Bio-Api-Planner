@@ -51,16 +51,10 @@ export default function Interventions() {
     return 0;
   });
 
-  const getPriorityColor = (priority: string) => {
-    // Priority might be derived from logic or a payload field, 
-    // but we'll assign colors to standard terms if they exist
-    return "bg-secondary text-secondary-foreground"; // Default
-  };
-
   const getStatusIcon = (status: string) => {
     switch(status.toLowerCase()) {
-      case 'completed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case 'skipped': return <XCircle className="w-5 h-5 text-muted-foreground" />;
+      case 'executed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
+      case 'dismissed': return <XCircle className="w-5 h-5 text-muted-foreground" />;
       default: return <Clock className="w-5 h-5 text-primary" />;
     }
   };
