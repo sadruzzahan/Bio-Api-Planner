@@ -19,7 +19,6 @@ const buckets: Record<ProviderId, Bucket> = {
   whoop:   { capacity: 30, refillPerSecond: 0.5, tokens: 30, updatedAt: 0 },
   oura:    { capacity: 60, refillPerSecond: 1.0, tokens: 60, updatedAt: 0 },
   fitbit:  { capacity: 60, refillPerSecond: 1.0, tokens: 60, updatedAt: 0 },
-  garmin:  { capacity: 30, refillPerSecond: 0.5, tokens: 30, updatedAt: 0 },
   dexcom:  { capacity: 60, refillPerSecond: 1.0, tokens: 60, updatedAt: 0 },
 };
 

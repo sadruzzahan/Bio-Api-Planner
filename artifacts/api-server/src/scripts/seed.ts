@@ -94,7 +94,6 @@ async function seed() {
   const integrationData = [
     { provider: "whoop", category: "wearable", status: "connected" },
     { provider: "oura", category: "wearable", status: "connected" },
-    { provider: "garmin", category: "wearable", status: "connected" },
     { provider: "dexcom", category: "cgm", status: "connected" },
     { provider: "levels", category: "cgm", status: "connected" },
     { provider: "apple_health", category: "platform", status: "connected" },

@@ -3,14 +3,16 @@ import { ProviderNotConfiguredError } from "./types";
 import { whoopAdapter } from "./providers/whoop";
 import { ouraAdapter } from "./providers/oura";
 import { fitbitAdapter } from "./providers/fitbit";
-import { garminAdapter } from "./providers/garmin";
 import { dexcomAdapter } from "./providers/dexcom";
 
+// Garmin Health is not registered here — it requires partner approval and
+// uses OAuth 1.0a, which is tracked as a follow-up. Do not add a stub
+// adapter to this map; only providers we can actually authenticate today
+// belong here so the UI never advertises a connection it can't deliver.
 const adapters: Record<ProviderId, ProviderAdapter> = {
   whoop: whoopAdapter,
   oura: ouraAdapter,
   fitbit: fitbitAdapter,
-  garmin: garminAdapter,
   dexcom: dexcomAdapter,
 };
 

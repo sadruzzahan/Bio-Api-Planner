@@ -1,5 +1,5 @@
+import crypto from "node:crypto";
 import {
-  type AdapterIntegration,
   type NormalisedPayload,
   type ProviderAdapter,
   type ProviderTokens,
@@ -78,7 +78,29 @@ export const dexcomAdapter: ProviderAdapter = {
   syncIntervalMs: 15 * 60 * 1000,
   sandbox: true, // flipped via DEXCOM_SANDBOX=false once partner-approved
   scopes: SCOPES,
-  supportsWebhooks: false,
+  supportsWebhooks: true,
+
+  // Dexcom signs notification callbacks with HMAC-SHA256 of the raw
+  // request body using the partner client secret as the key, delivered
+  // in the `x-dexcom-signature` header (hex-lowercase). We compare with
+  // a constant-time check; the public webhook router calls this BEFORE
+  // any JSON parsing happens (raw body preserved).
+  verifyWebhook(rawBody, headers) {
+    const cfg = loadProviderConfig("dexcom");
+    const sig = String(
+      headers["x-dexcom-signature"] ?? headers["x-dexcom-signature-256"] ?? "",
+    ).toLowerCase();
+    if (!sig) throw new Error("missing dexcom signature header");
+    const expected = crypto
+      .createHmac("sha256", cfg.clientSecret)
+      .update(rawBody)
+      .digest("hex");
+    const a = Buffer.from(sig, "hex");
+    const b = Buffer.from(expected, "hex");
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      throw new Error("dexcom signature mismatch");
+    }
+  },
 
   oauthAuthorizeUrl(state) {
     const cfg = loadProviderConfig("dexcom");

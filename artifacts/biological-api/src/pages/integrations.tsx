@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useListIntegrations,
   useDisconnectIntegration,
@@ -7,23 +7,23 @@ import {
   getListIntegrationsQueryKey,
   customFetch,
   type Integration,
-  type IntegrationSyncRun,
 } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ProviderLogo } from "@/components/provider-logo";
 import {
   Activity,
   Clock,
   Link2,
   Unlink,
-  Cpu,
   Droplet,
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
+  Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -41,7 +41,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   error:         { label: "Sync error",    className: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
-function formatRelative(iso: string | null | undefined): string {
+function formatRelativePast(iso: string | null | undefined): string {
   if (!iso) return "never";
   const ms = Date.now() - new Date(iso).getTime();
   if (ms < 0) return "soon";
@@ -51,6 +51,18 @@ function formatRelative(iso: string | null | undefined): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function formatRelativeFuture(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "any moment";
+  const m = Math.floor(ms / 60_000);
+  if (m < 1) return "<1m";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
 }
 
 function IntegrationCard({
@@ -70,6 +82,7 @@ function IntegrationCard({
   const isConnected = status === "connected" || status === "needs_reauth" || status === "error";
   const badge = STATUS_BADGE[status] ?? STATUS_BADGE.disconnected!;
   const isPending = pendingProvider === integration.provider;
+  const nextSync = formatRelativeFuture(integration.nextSyncAt);
 
   return (
     <div
@@ -86,9 +99,7 @@ function IntegrationCard({
       )}
 
       <div className="flex justify-between items-start mb-3">
-        <div className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground">
-          <Cpu className="w-5 h-5" />
-        </div>
+        <ProviderLogo provider={integration.provider} />
         <div className="flex flex-col items-end gap-1">
           <Badge variant="outline" className={`font-mono text-[10px] uppercase ${badge.className}`}>
             {badge.label}
@@ -111,8 +122,14 @@ function IntegrationCard({
         <div className="space-y-1 text-xs font-mono text-muted-foreground mb-3">
           <div className="flex items-center gap-1.5">
             <Clock className="w-3 h-3" />
-            <span>Last sync: {formatRelative(integration.lastSyncAt)}</span>
+            <span>Last sync: {formatRelativePast(integration.lastSyncAt)}</span>
           </div>
+          {nextSync && status === "connected" && (
+            <div className="flex items-center gap-1.5">
+              <Timer className="w-3 h-3" />
+              <span>Next sync in: {nextSync}</span>
+            </div>
+          )}
           {integration.scopes && integration.scopes.length > 0 && (
             <div className="text-[10px] truncate" title={integration.scopes.join(", ")}>
               Scopes: {integration.scopes.slice(0, 3).join(", ")}
@@ -202,7 +219,7 @@ function ReauthBanner({ items }: { items: Integration[] }) {
 }
 
 function CallbackToast() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   useEffect(() => {
     const search = typeof window !== "undefined" ? window.location.search : "";
@@ -218,12 +235,11 @@ function CallbackToast() {
       toast.error(`Connection failed (${provider}): ${error.replace(/_/g, " ")}`);
     }
     if (connected || error) {
-      // Clear the noisy querystring without a re-render storm.
+      // Strip the OAuth callback querystring without reloading the page.
       window.history.replaceState({}, "", window.location.pathname);
-      void location;
-      void setLocation;
+      setLocation(window.location.pathname);
     }
-  }, [location, setLocation, queryClient]);
+  }, [setLocation, queryClient]);
   return null;
 }
 
@@ -237,7 +253,6 @@ export default function IntegrationsPage() {
   const handleConnect = async (provider: string) => {
     setPendingProvider(provider);
     try {
-      // Fetch the authorize URL via the API and then top-level navigate.
       const res = await customFetch<{ url: string }>(
         `/api/integrations/${provider}/authorize-url`,
         { method: "GET" },
@@ -247,10 +262,10 @@ export default function IntegrationsPage() {
         return;
       }
       toast.error(`Could not start ${provider} connection`);
+      setPendingProvider(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Could not start ${provider} connection: ${message}`);
-    } finally {
       setPendingProvider(null);
     }
   };
@@ -321,7 +336,7 @@ export default function IntegrationsPage() {
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-lg" />)}
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-56 rounded-lg" />)}
           </div>
         ) : (
           TIER_GROUPS.map((tier) => {
@@ -355,9 +370,3 @@ export default function IntegrationsPage() {
     </Layout>
   );
 }
-
-// Suppress unused-import lint for the type-only re-export used elsewhere.
-export type { IntegrationSyncRun };
-// Reference useQuery to avoid TS6133 in some build configurations where the
-// hook is imported but not yet wired into the (planned) sync history modal.
-void useQuery;

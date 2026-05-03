@@ -10,7 +10,7 @@
  * refresh, and audit logging.
  */
 
-export type ProviderId = "whoop" | "oura" | "fitbit" | "garmin" | "dexcom";
+export type ProviderId = "whoop" | "oura" | "fitbit" | "dexcom";
 
 export type ProviderCategory = "wearable" | "cgm";
 

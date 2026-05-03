@@ -15,7 +15,6 @@ import { toast } from "sonner";
 const WEARABLES = [
   { id: "whoop", label: "WHOOP" },
   { id: "oura", label: "Oura Ring" },
-  { id: "garmin", label: "Garmin" },
   { id: "apple_health", label: "Apple Health" },
   { id: "fitbit", label: "Fitbit" },
   { id: "none", label: "None yet" },
