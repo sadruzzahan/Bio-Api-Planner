@@ -39,21 +39,6 @@ export default function Interventions() {
   });
 
   const handleUpdateStatus = (id: number, status: string) => {
-    // API expects the id inside the URL, but the hook might expect { id, data } or similar.
-    // The exact signature from standard Orval for path params + body is usually:
-    // mutate({ id, data: { status } })
-    // If it fails, check hook signature. We'll use standard structure.
-    // Assuming generated hook is mutate({ id, data })
-    // Wait, generated API for updateIntervention usually takes `(id, body)`.
-    // Let's pass the id as parameter to the hook if needed or in the object.
-    // Since we don't have the exact hook signature, we will assume standard object.
-    
-    // Actually, the api schema has UpdateInterventionBody with status.
-    // The path is likely /api/interventions/:id
-    // We'll call updateMutation.mutate with a guess, or if it doesn't have id in body, 
-    // it might be (id, data). Let's use standard any cast if needed, but we'll try the common pattern.
-    
-    // @ts-ignore - bypassing strict type check for generated hook signature variability
     updateMutation.mutate({ id, data: { status } });
   };
 

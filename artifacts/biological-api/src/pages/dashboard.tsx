@@ -1,4 +1,5 @@
 import { useGetDashboard } from "@workspace/api-client-react";
+import type { Insight, Intervention } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -118,7 +119,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {recentInsights?.map((insight: any) => (
+              {recentInsights?.map((insight: Insight) => (
                 <div key={insight.id} className="p-4 rounded-md border border-border bg-background/50" data-testid={`insight-${insight.id}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={insight.severity === 'high' ? 'destructive' : 'default'} className="font-mono text-[10px] uppercase">
@@ -144,7 +145,7 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingInterventions?.map((intervention: any) => (
+              {pendingInterventions?.map((intervention: Intervention) => (
                 <div key={intervention.id} className="p-4 rounded-md border border-border bg-background/50 flex flex-col gap-2" data-testid={`intervention-${intervention.id}`}>
                   <div className="font-mono font-bold text-sm uppercase text-foreground">{intervention.title}</div>
                   <p className="text-sm text-muted-foreground">{intervention.action}</p>

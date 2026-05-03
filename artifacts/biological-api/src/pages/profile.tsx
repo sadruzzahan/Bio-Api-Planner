@@ -40,7 +40,7 @@ export default function Profile() {
     if (user) {
       form.reset({
         name: user.name || "",
-        timezone: (user as any).timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         primaryGoal: user.primaryGoal || "",
       });
     }

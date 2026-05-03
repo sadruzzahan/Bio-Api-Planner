@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Clock, Zap } from "lucide-react";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { format, parseISO } from "date-fns";
+import { Layout } from "@/components/layout";
 
 export default function Sleep() {
   const { data: trendData, isLoading: isLoadingTrend } = useGetSleepTrend();
   const { data: sessionsData, isLoading: isLoadingSessions } = useListSleep();
 
   return (
+    <Layout>
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -186,5 +188,6 @@ export default function Sleep() {
         </div>
       </motion.div>
     </AnimatePresence>
+    </Layout>
   );
 }
