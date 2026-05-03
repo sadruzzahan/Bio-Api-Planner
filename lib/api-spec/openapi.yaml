@@ -29,7 +29,7 @@ paths:
   /healthz:
     get:
       operationId: healthCheck
-      tags: [health]
+      tags: [ health ]
       summary: Health check
       security: []
       responses:
@@ -43,7 +43,7 @@ paths:
   /users/me:
     get:
       operationId: getCurrentUser
-      tags: [users]
+      tags: [ users ]
       summary: Get current user profile
       responses:
         "200":
@@ -52,9 +52,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     patch:
       operationId: updateCurrentUser
-      tags: [users]
+      tags: [ users ]
       summary: Update current user profile
       requestBody:
         required: true
@@ -69,11 +73,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /biometrics:
     get:
       operationId: listBiometrics
-      tags: [biometrics]
+      tags: [ biometrics ]
       summary: List biometric readings
       parameters:
         - in: query
@@ -100,9 +108,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BiometricReading"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       operationId: createBiometric
-      tags: [biometrics]
+      tags: [ biometrics ]
       summary: Create a manual biometric reading
       requestBody:
         required: true
@@ -117,11 +129,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BiometricReading"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /biometrics/summary:
     get:
       operationId: getBiometricsSummary
-      tags: [biometrics]
+      tags: [ biometrics ]
       summary: 7-day and 30-day aggregate per metric
       responses:
         "200":
@@ -132,11 +148,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BiometricSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /sleep:
     get:
       operationId: listSleep
-      tags: [sleep]
+      tags: [ sleep ]
       summary: List sleep sessions
       parameters:
         - in: query
@@ -154,11 +174,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SleepSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /sleep/trend:
     get:
       operationId: getSleepTrend
-      tags: [sleep]
+      tags: [ sleep ]
       summary: 30-day sleep trend
       responses:
         "200":
@@ -167,11 +191,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SleepTrend"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /glucose:
     get:
       operationId: listGlucose
-      tags: [glucose]
+      tags: [ glucose ]
       summary: List glucose readings
       parameters:
         - in: query
@@ -192,11 +220,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/GlucoseReading"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /glucose/trend:
     get:
       operationId: getGlucoseTrend
-      tags: [glucose]
+      tags: [ glucose ]
       summary: Glucose trend (daily averages, variability)
       responses:
         "200":
@@ -205,11 +237,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GlucoseTrend"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /activity:
     get:
       operationId: listActivity
-      tags: [activity]
+      tags: [ activity ]
       summary: List activity sessions
       parameters:
         - in: query
@@ -227,11 +263,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivitySession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /state/current:
     get:
       operationId: getCurrentState
-      tags: [state]
+      tags: [ state ]
       summary: Current biological state classification
       responses:
         "200":
@@ -240,11 +280,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BiologicalState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /state/history:
     get:
       operationId: getStateHistory
-      tags: [state]
+      tags: [ state ]
       summary: Biological state history
       parameters:
         - in: query
@@ -262,11 +306,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/BiologicalState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /interventions:
     get:
       operationId: listInterventions
-      tags: [interventions]
+      tags: [ interventions ]
       summary: List interventions
       parameters:
         - in: query
@@ -281,11 +329,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Intervention"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /interventions/{id}:
     patch:
       operationId: updateIntervention
-      tags: [interventions]
+      tags: [ interventions ]
       summary: Update intervention status
       parameters:
         - in: path
@@ -305,11 +357,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Intervention"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /meals:
     get:
       operationId: listMeals
-      tags: [meals]
+      tags: [ meals ]
       summary: List meal log
       parameters:
         - in: query
@@ -327,9 +383,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Meal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       operationId: createMeal
-      tags: [meals]
+      tags: [ meals ]
       summary: Log a meal
       requestBody:
         required: true
@@ -344,11 +404,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Meal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /supplements:
     get:
       operationId: listSupplements
-      tags: [supplements]
+      tags: [ supplements ]
       summary: Supplement stack
       responses:
         "200":
@@ -359,9 +423,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Supplement"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     post:
       operationId: createSupplement
-      tags: [supplements]
+      tags: [ supplements ]
       summary: Add a supplement
       requestBody:
         required: true
@@ -376,11 +444,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Supplement"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /supplements/{id}:
     patch:
       operationId: updateSupplement
-      tags: [supplements]
+      tags: [ supplements ]
       summary: Update a supplement
       parameters:
         - in: path
@@ -400,9 +472,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Supplement"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     delete:
       operationId: deleteSupplement
-      tags: [supplements]
+      tags: [ supplements ]
       summary: Remove a supplement
       parameters:
         - in: path
@@ -412,11 +488,15 @@ paths:
       responses:
         "204":
           description: Deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /integrations:
     get:
       operationId: listIntegrations
-      tags: [integrations]
+      tags: [ integrations ]
       summary: List integrations
       responses:
         "200":
@@ -427,11 +507,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Integration"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /integrations/{provider}/connect:
     post:
       operationId: connectIntegration
-      tags: [integrations]
+      tags: [ integrations ]
       summary: Initiate or simulate a connection
       parameters:
         - in: path
@@ -445,11 +529,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Integration"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /integrations/{provider}:
     delete:
       operationId: disconnectIntegration
-      tags: [integrations]
+      tags: [ integrations ]
       summary: Disconnect an integration
       parameters:
         - in: path
@@ -463,11 +551,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Integration"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /dashboard:
     get:
       operationId: getDashboard
-      tags: [dashboard]
+      tags: [ dashboard ]
       summary: Composite dashboard payload
       responses:
         "200":
@@ -476,11 +568,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dashboard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /insights:
     get:
       operationId: getInsights
-      tags: [insights]
+      tags: [ insights ]
       summary: AI insight cards
       responses:
         "200":
@@ -491,11 +587,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Insight"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /chat:
     post:
       operationId: sendChatMessage
-      tags: [chat]
+      tags: [ chat ]
       summary: Send a chat message and get AI response
       requestBody:
         required: true
@@ -510,11 +610,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChatResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /chat/history:
     get:
       operationId: getChatHistory
-      tags: [chat]
+      tags: [ chat ]
       summary: Recent chat messages
       parameters:
         - in: query
@@ -529,6 +633,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ChatMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
 components:
   securitySchemes:
@@ -555,12 +663,12 @@ components:
       type: object
       properties:
         error: { type: string }
-      required: [error]
+      required: [ error ]
     HealthStatus:
       type: object
       properties:
         status: { type: string }
-      required: [status]
+      required: [ status ]
 
     User:
       type: object
@@ -574,7 +682,7 @@ components:
         primaryGoal: { type: string }
         onboardedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
-      required: [id, email, name, role, tier, chronotype, primaryGoal, createdAt]
+      required: [ id, email, name, role, tier, chronotype, primaryGoal, createdAt ]
 
     UpdateUserBody:
       type: object
@@ -594,7 +702,7 @@ components:
         value: { type: number }
         unit: { type: string }
         recordedAt: { type: string, format: date-time }
-      required: [id, userId, source, metric, value, unit, recordedAt]
+      required: [ id, userId, source, metric, value, unit, recordedAt ]
 
     CreateBiometricBody:
       type: object
@@ -604,7 +712,7 @@ components:
         value: { type: number }
         unit: { type: string }
         recordedAt: { type: string, format: date-time }
-      required: [source, metric, value, unit, recordedAt]
+      required: [ source, metric, value, unit, recordedAt ]
 
     BiometricSummary:
       type: object
@@ -619,7 +727,7 @@ components:
         trendPct: { type: number, nullable: true }
         latest: { type: number, nullable: true }
         latestAt: { type: string, format: date-time, nullable: true }
-      required: [metric, unit]
+      required: [ metric, unit ]
 
     SleepSession:
       type: object
@@ -636,7 +744,21 @@ components:
         efficiencyPct: { type: number }
         onsetAt: { type: string, format: date-time }
         wakeAt: { type: string, format: date-time }
-      required: [id, userId, source, date, totalMinutes, deepMinutes, remMinutes, lightMinutes, awakeMinutes, efficiencyPct, onsetAt, wakeAt]
+      required:
+        [
+          id,
+          userId,
+          source,
+          date,
+          totalMinutes,
+          deepMinutes,
+          remMinutes,
+          lightMinutes,
+          awakeMinutes,
+          efficiencyPct,
+          onsetAt,
+          wakeAt
+        ]
 
     SleepTrendPoint:
       type: object
@@ -647,7 +769,15 @@ components:
         remMinutes: { type: integer }
         lightMinutes: { type: integer }
         efficiencyPct: { type: number }
-      required: [date, totalMinutes, deepMinutes, remMinutes, lightMinutes, efficiencyPct]
+      required:
+        [
+          date,
+          totalMinutes,
+          deepMinutes,
+          remMinutes,
+          lightMinutes,
+          efficiencyPct
+        ]
 
     SleepTrend:
       type: object
@@ -660,7 +790,15 @@ components:
         points:
           type: array
           items: { $ref: "#/components/schemas/SleepTrendPoint" }
-      required: [avgTotalMinutes, avgEfficiencyPct, avgDeepMinutes, avgRemMinutes, sleepDebtMinutes, points]
+      required:
+        [
+          avgTotalMinutes,
+          avgEfficiencyPct,
+          avgDeepMinutes,
+          avgRemMinutes,
+          sleepDebtMinutes,
+          points
+        ]
 
     GlucoseReading:
       type: object
@@ -671,7 +809,7 @@ components:
         valueMgdl: { type: number }
         mealContext: { type: string }
         recordedAt: { type: string, format: date-time }
-      required: [id, userId, source, valueMgdl, mealContext, recordedAt]
+      required: [ id, userId, source, valueMgdl, mealContext, recordedAt ]
 
     GlucoseTrendPoint:
       type: object
@@ -681,7 +819,7 @@ components:
         minMgdl: { type: number }
         maxMgdl: { type: number }
         variabilityPct: { type: number }
-      required: [date, avgMgdl, minMgdl, maxMgdl, variabilityPct]
+      required: [ date, avgMgdl, minMgdl, maxMgdl, variabilityPct ]
 
     GlucoseTrend:
       type: object
@@ -694,7 +832,7 @@ components:
         points:
           type: array
           items: { $ref: "#/components/schemas/GlucoseTrendPoint" }
-      required: [avgMgdl, variabilityPct, timeInRangePct, peakMgdl, troughMgdl, points]
+      required: [ avgMgdl, variabilityPct, timeInRangePct, peakMgdl, troughMgdl, points ]
 
     ActivitySession:
       type: object
@@ -709,7 +847,17 @@ components:
         avgHeartRate: { type: integer, nullable: true }
         calories: { type: integer, nullable: true }
         recordedAt: { type: string, format: date-time }
-      required: [id, userId, source, type, durationMinutes, intensity, strainScore, recordedAt]
+      required:
+        [
+          id,
+          userId,
+          source,
+          type,
+          durationMinutes,
+          intensity,
+          strainScore,
+          recordedAt
+        ]
 
     BiologicalState:
       type: object
@@ -724,7 +872,18 @@ components:
         metabolicState: { type: string }
         readinessScore: { type: integer }
         notes: { type: string, nullable: true }
-      required: [id, userId, computedAt, energyState, recoveryState, cognitiveState, stressState, metabolicState, readinessScore]
+      required:
+        [
+          id,
+          userId,
+          computedAt,
+          energyState,
+          recoveryState,
+          cognitiveState,
+          stressState,
+          metabolicState,
+          readinessScore
+        ]
 
     Intervention:
       type: object
@@ -739,13 +898,24 @@ components:
         triggeredAt: { type: string, format: date-time }
         executedAt: { type: string, format: date-time, nullable: true }
         payload: { type: object, additionalProperties: true }
-      required: [id, userId, type, title, action, rationale, status, triggeredAt, payload]
+      required:
+        [
+          id,
+          userId,
+          type,
+          title,
+          action,
+          rationale,
+          status,
+          triggeredAt,
+          payload
+        ]
 
     UpdateInterventionBody:
       type: object
       properties:
         status: { type: string }
-      required: [status]
+      required: [ status ]
 
     Meal:
       type: object
@@ -760,7 +930,19 @@ components:
         proteinG: { type: number }
         fatG: { type: number }
         source: { type: string }
-      required: [id, userId, loggedAt, description, glycemicImpact, calories, carbsG, proteinG, fatG, source]
+      required:
+        [
+          id,
+          userId,
+          loggedAt,
+          description,
+          glycemicImpact,
+          calories,
+          carbsG,
+          proteinG,
+          fatG,
+          source
+        ]
 
     CreateMealBody:
       type: object
@@ -773,7 +955,16 @@ components:
         proteinG: { type: number }
         fatG: { type: number }
         source: { type: string }
-      required: [loggedAt, description, glycemicImpact, calories, carbsG, proteinG, fatG]
+      required:
+        [
+          loggedAt,
+          description,
+          glycemicImpact,
+          calories,
+          carbsG,
+          proteinG,
+          fatG
+        ]
 
     Supplement:
       type: object
@@ -786,7 +977,7 @@ components:
         active: { type: boolean }
         recommendedByAi: { type: boolean }
         rationale: { type: string, nullable: true }
-      required: [id, userId, name, doseMg, timing, active, recommendedByAi]
+      required: [ id, userId, name, doseMg, timing, active, recommendedByAi ]
 
     CreateSupplementBody:
       type: object
@@ -794,7 +985,7 @@ components:
         name: { type: string }
         doseMg: { type: number }
         timing: { type: string }
-      required: [name, doseMg, timing]
+      required: [ name, doseMg, timing ]
 
     UpdateSupplementBody:
       type: object
@@ -814,7 +1005,7 @@ components:
         status: { type: string }
         connectedAt: { type: string, format: date-time, nullable: true }
         metadata: { type: object, additionalProperties: true }
-      required: [id, userId, provider, category, status, metadata]
+      required: [ id, userId, provider, category, status, metadata ]
 
     DashboardSummary:
       type: object
@@ -827,7 +1018,17 @@ components:
         glucoseRangeMgdl: { type: number }
         activeMinutes: { type: integer }
         strainScore: { type: number }
-      required: [steps, avgHeartRate, sleepMinutes, sleepEfficiencyPct, glucoseAvgMgdl, glucoseRangeMgdl, activeMinutes, strainScore]
+      required:
+        [
+          steps,
+          avgHeartRate,
+          sleepMinutes,
+          sleepEfficiencyPct,
+          glucoseAvgMgdl,
+          glucoseRangeMgdl,
+          activeMinutes,
+          strainScore
+        ]
 
     Dashboard:
       type: object
@@ -841,7 +1042,7 @@ components:
         recentInsights:
           type: array
           items: { $ref: "#/components/schemas/Insight" }
-      required: [user, state, summary, pendingInterventions, recentInsights]
+      required: [ user, state, summary, pendingInterventions, recentInsights ]
 
     Insight:
       type: object
@@ -852,13 +1053,13 @@ components:
         category: { type: string }
         severity: { type: string }
         createdAt: { type: string, format: date-time }
-      required: [id, title, body, category, severity, createdAt]
+      required: [ id, title, body, category, severity, createdAt ]
 
     SendChatBody:
       type: object
       properties:
         message: { type: string }
-      required: [message]
+      required: [ message ]
 
     ChatMessage:
       type: object
@@ -868,11 +1069,11 @@ components:
         role: { type: string }
         content: { type: string }
         createdAt: { type: string, format: date-time }
-      required: [id, userId, role, content, createdAt]
+      required: [ id, userId, role, content, createdAt ]
 
     ChatResponse:
       type: object
       properties:
         userMessage: { $ref: "#/components/schemas/ChatMessage" }
         assistantMessage: { $ref: "#/components/schemas/ChatMessage" }
-      required: [userMessage, assistantMessage]
+      required: [ userMessage, assistantMessage ]

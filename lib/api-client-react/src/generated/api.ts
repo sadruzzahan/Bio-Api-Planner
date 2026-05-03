@@ -27,6 +27,7 @@ import type {
   CreateMealBody,
   CreateSupplementBody,
   Dashboard,
+  ForbiddenResponse,
   GetChatHistoryParams,
   GetStateHistoryParams,
   GlucoseReading,
@@ -46,6 +47,7 @@ import type {
   SleepSession,
   SleepTrend,
   Supplement,
+  UnauthorizedResponse,
   UpdateInterventionBody,
   UpdateSupplementBody,
   UpdateUserBody,
@@ -156,7 +158,7 @@ export const getGetCurrentUserQueryKey = () => {
 
 export const getGetCurrentUserQueryOptions = <
   TData = Awaited<ReturnType<typeof getCurrentUser>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getCurrentUser>>,
@@ -183,7 +185,9 @@ export const getGetCurrentUserQueryOptions = <
 export type GetCurrentUserQueryResult = NonNullable<
   Awaited<ReturnType<typeof getCurrentUser>>
 >;
-export type GetCurrentUserQueryError = ErrorType<unknown>;
+export type GetCurrentUserQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Get current user profile
@@ -191,7 +195,7 @@ export type GetCurrentUserQueryError = ErrorType<unknown>;
 
 export function useGetCurrentUser<
   TData = Awaited<ReturnType<typeof getCurrentUser>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getCurrentUser>>,
@@ -229,7 +233,7 @@ export const updateCurrentUser = async (
 };
 
 export const getUpdateCurrentUserMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -270,13 +274,15 @@ export type UpdateCurrentUserMutationResult = NonNullable<
   Awaited<ReturnType<typeof updateCurrentUser>>
 >;
 export type UpdateCurrentUserMutationBody = BodyType<UpdateUserBody>;
-export type UpdateCurrentUserMutationError = ErrorType<unknown>;
+export type UpdateCurrentUserMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Update current user profile
  */
 export const useUpdateCurrentUser = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -330,7 +336,7 @@ export const getListBiometricsQueryKey = (params?: ListBiometricsParams) => {
 
 export const getListBiometricsQueryOptions = <
   TData = Awaited<ReturnType<typeof listBiometrics>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListBiometricsParams,
   options?: {
@@ -360,7 +366,9 @@ export const getListBiometricsQueryOptions = <
 export type ListBiometricsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listBiometrics>>
 >;
-export type ListBiometricsQueryError = ErrorType<unknown>;
+export type ListBiometricsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List biometric readings
@@ -368,7 +376,7 @@ export type ListBiometricsQueryError = ErrorType<unknown>;
 
 export function useListBiometrics<
   TData = Awaited<ReturnType<typeof listBiometrics>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListBiometricsParams,
   options?: {
@@ -409,7 +417,7 @@ export const createBiometric = async (
 };
 
 export const getCreateBiometricMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -450,13 +458,15 @@ export type CreateBiometricMutationResult = NonNullable<
   Awaited<ReturnType<typeof createBiometric>>
 >;
 export type CreateBiometricMutationBody = BodyType<CreateBiometricBody>;
-export type CreateBiometricMutationError = ErrorType<unknown>;
+export type CreateBiometricMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Create a manual biometric reading
  */
 export const useCreateBiometric = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -497,7 +507,7 @@ export const getGetBiometricsSummaryQueryKey = () => {
 
 export const getGetBiometricsSummaryQueryOptions = <
   TData = Awaited<ReturnType<typeof getBiometricsSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getBiometricsSummary>>,
@@ -524,7 +534,9 @@ export const getGetBiometricsSummaryQueryOptions = <
 export type GetBiometricsSummaryQueryResult = NonNullable<
   Awaited<ReturnType<typeof getBiometricsSummary>>
 >;
-export type GetBiometricsSummaryQueryError = ErrorType<unknown>;
+export type GetBiometricsSummaryQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary 7-day and 30-day aggregate per metric
@@ -532,7 +544,7 @@ export type GetBiometricsSummaryQueryError = ErrorType<unknown>;
 
 export function useGetBiometricsSummary<
   TData = Awaited<ReturnType<typeof getBiometricsSummary>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getBiometricsSummary>>,
@@ -585,7 +597,7 @@ export const getListSleepQueryKey = (params?: ListSleepParams) => {
 
 export const getListSleepQueryOptions = <
   TData = Awaited<ReturnType<typeof listSleep>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListSleepParams,
   options?: {
@@ -615,7 +627,9 @@ export const getListSleepQueryOptions = <
 export type ListSleepQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSleep>>
 >;
-export type ListSleepQueryError = ErrorType<unknown>;
+export type ListSleepQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List sleep sessions
@@ -623,7 +637,7 @@ export type ListSleepQueryError = ErrorType<unknown>;
 
 export function useListSleep<
   TData = Awaited<ReturnType<typeof listSleep>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListSleepParams,
   options?: {
@@ -666,7 +680,7 @@ export const getGetSleepTrendQueryKey = () => {
 
 export const getGetSleepTrendQueryOptions = <
   TData = Awaited<ReturnType<typeof getSleepTrend>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getSleepTrend>>,
@@ -693,7 +707,9 @@ export const getGetSleepTrendQueryOptions = <
 export type GetSleepTrendQueryResult = NonNullable<
   Awaited<ReturnType<typeof getSleepTrend>>
 >;
-export type GetSleepTrendQueryError = ErrorType<unknown>;
+export type GetSleepTrendQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary 30-day sleep trend
@@ -701,7 +717,7 @@ export type GetSleepTrendQueryError = ErrorType<unknown>;
 
 export function useGetSleepTrend<
   TData = Awaited<ReturnType<typeof getSleepTrend>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getSleepTrend>>,
@@ -754,7 +770,7 @@ export const getListGlucoseQueryKey = (params?: ListGlucoseParams) => {
 
 export const getListGlucoseQueryOptions = <
   TData = Awaited<ReturnType<typeof listGlucose>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListGlucoseParams,
   options?: {
@@ -784,7 +800,9 @@ export const getListGlucoseQueryOptions = <
 export type ListGlucoseQueryResult = NonNullable<
   Awaited<ReturnType<typeof listGlucose>>
 >;
-export type ListGlucoseQueryError = ErrorType<unknown>;
+export type ListGlucoseQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List glucose readings
@@ -792,7 +810,7 @@ export type ListGlucoseQueryError = ErrorType<unknown>;
 
 export function useListGlucose<
   TData = Awaited<ReturnType<typeof listGlucose>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListGlucoseParams,
   options?: {
@@ -835,7 +853,7 @@ export const getGetGlucoseTrendQueryKey = () => {
 
 export const getGetGlucoseTrendQueryOptions = <
   TData = Awaited<ReturnType<typeof getGlucoseTrend>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getGlucoseTrend>>,
@@ -862,7 +880,9 @@ export const getGetGlucoseTrendQueryOptions = <
 export type GetGlucoseTrendQueryResult = NonNullable<
   Awaited<ReturnType<typeof getGlucoseTrend>>
 >;
-export type GetGlucoseTrendQueryError = ErrorType<unknown>;
+export type GetGlucoseTrendQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Glucose trend (daily averages, variability)
@@ -870,7 +890,7 @@ export type GetGlucoseTrendQueryError = ErrorType<unknown>;
 
 export function useGetGlucoseTrend<
   TData = Awaited<ReturnType<typeof getGlucoseTrend>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getGlucoseTrend>>,
@@ -923,7 +943,7 @@ export const getListActivityQueryKey = (params?: ListActivityParams) => {
 
 export const getListActivityQueryOptions = <
   TData = Awaited<ReturnType<typeof listActivity>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListActivityParams,
   options?: {
@@ -953,7 +973,9 @@ export const getListActivityQueryOptions = <
 export type ListActivityQueryResult = NonNullable<
   Awaited<ReturnType<typeof listActivity>>
 >;
-export type ListActivityQueryError = ErrorType<unknown>;
+export type ListActivityQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List activity sessions
@@ -961,7 +983,7 @@ export type ListActivityQueryError = ErrorType<unknown>;
 
 export function useListActivity<
   TData = Awaited<ReturnType<typeof listActivity>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListActivityParams,
   options?: {
@@ -1004,7 +1026,7 @@ export const getGetCurrentStateQueryKey = () => {
 
 export const getGetCurrentStateQueryOptions = <
   TData = Awaited<ReturnType<typeof getCurrentState>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getCurrentState>>,
@@ -1031,7 +1053,9 @@ export const getGetCurrentStateQueryOptions = <
 export type GetCurrentStateQueryResult = NonNullable<
   Awaited<ReturnType<typeof getCurrentState>>
 >;
-export type GetCurrentStateQueryError = ErrorType<unknown>;
+export type GetCurrentStateQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Current biological state classification
@@ -1039,7 +1063,7 @@ export type GetCurrentStateQueryError = ErrorType<unknown>;
 
 export function useGetCurrentState<
   TData = Awaited<ReturnType<typeof getCurrentState>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getCurrentState>>,
@@ -1092,7 +1116,7 @@ export const getGetStateHistoryQueryKey = (params?: GetStateHistoryParams) => {
 
 export const getGetStateHistoryQueryOptions = <
   TData = Awaited<ReturnType<typeof getStateHistory>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: GetStateHistoryParams,
   options?: {
@@ -1122,7 +1146,9 @@ export const getGetStateHistoryQueryOptions = <
 export type GetStateHistoryQueryResult = NonNullable<
   Awaited<ReturnType<typeof getStateHistory>>
 >;
-export type GetStateHistoryQueryError = ErrorType<unknown>;
+export type GetStateHistoryQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Biological state history
@@ -1130,7 +1156,7 @@ export type GetStateHistoryQueryError = ErrorType<unknown>;
 
 export function useGetStateHistory<
   TData = Awaited<ReturnType<typeof getStateHistory>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: GetStateHistoryParams,
   options?: {
@@ -1188,7 +1214,7 @@ export const getListInterventionsQueryKey = (
 
 export const getListInterventionsQueryOptions = <
   TData = Awaited<ReturnType<typeof listInterventions>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListInterventionsParams,
   options?: {
@@ -1219,7 +1245,9 @@ export const getListInterventionsQueryOptions = <
 export type ListInterventionsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listInterventions>>
 >;
-export type ListInterventionsQueryError = ErrorType<unknown>;
+export type ListInterventionsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List interventions
@@ -1227,7 +1255,7 @@ export type ListInterventionsQueryError = ErrorType<unknown>;
 
 export function useListInterventions<
   TData = Awaited<ReturnType<typeof listInterventions>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListInterventionsParams,
   options?: {
@@ -1269,7 +1297,7 @@ export const updateIntervention = async (
 };
 
 export const getUpdateInterventionMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1310,13 +1338,15 @@ export type UpdateInterventionMutationResult = NonNullable<
   Awaited<ReturnType<typeof updateIntervention>>
 >;
 export type UpdateInterventionMutationBody = BodyType<UpdateInterventionBody>;
-export type UpdateInterventionMutationError = ErrorType<unknown>;
+export type UpdateInterventionMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Update intervention status
  */
 export const useUpdateIntervention = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1370,7 +1400,7 @@ export const getListMealsQueryKey = (params?: ListMealsParams) => {
 
 export const getListMealsQueryOptions = <
   TData = Awaited<ReturnType<typeof listMeals>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListMealsParams,
   options?: {
@@ -1400,7 +1430,9 @@ export const getListMealsQueryOptions = <
 export type ListMealsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listMeals>>
 >;
-export type ListMealsQueryError = ErrorType<unknown>;
+export type ListMealsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List meal log
@@ -1408,7 +1440,7 @@ export type ListMealsQueryError = ErrorType<unknown>;
 
 export function useListMeals<
   TData = Awaited<ReturnType<typeof listMeals>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: ListMealsParams,
   options?: {
@@ -1449,7 +1481,7 @@ export const createMeal = async (
 };
 
 export const getCreateMealMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1490,13 +1522,15 @@ export type CreateMealMutationResult = NonNullable<
   Awaited<ReturnType<typeof createMeal>>
 >;
 export type CreateMealMutationBody = BodyType<CreateMealBody>;
-export type CreateMealMutationError = ErrorType<unknown>;
+export type CreateMealMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Log a meal
  */
 export const useCreateMeal = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1537,7 +1571,7 @@ export const getListSupplementsQueryKey = () => {
 
 export const getListSupplementsQueryOptions = <
   TData = Awaited<ReturnType<typeof listSupplements>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof listSupplements>>,
@@ -1564,7 +1598,9 @@ export const getListSupplementsQueryOptions = <
 export type ListSupplementsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listSupplements>>
 >;
-export type ListSupplementsQueryError = ErrorType<unknown>;
+export type ListSupplementsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Supplement stack
@@ -1572,7 +1608,7 @@ export type ListSupplementsQueryError = ErrorType<unknown>;
 
 export function useListSupplements<
   TData = Awaited<ReturnType<typeof listSupplements>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof listSupplements>>,
@@ -1610,7 +1646,7 @@ export const createSupplement = async (
 };
 
 export const getCreateSupplementMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1651,13 +1687,15 @@ export type CreateSupplementMutationResult = NonNullable<
   Awaited<ReturnType<typeof createSupplement>>
 >;
 export type CreateSupplementMutationBody = BodyType<CreateSupplementBody>;
-export type CreateSupplementMutationError = ErrorType<unknown>;
+export type CreateSupplementMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Add a supplement
  */
 export const useCreateSupplement = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1697,7 +1735,7 @@ export const updateSupplement = async (
 };
 
 export const getUpdateSupplementMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1738,13 +1776,15 @@ export type UpdateSupplementMutationResult = NonNullable<
   Awaited<ReturnType<typeof updateSupplement>>
 >;
 export type UpdateSupplementMutationBody = BodyType<UpdateSupplementBody>;
-export type UpdateSupplementMutationError = ErrorType<unknown>;
+export type UpdateSupplementMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Update a supplement
  */
 export const useUpdateSupplement = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1781,7 +1821,7 @@ export const deleteSupplement = async (
 };
 
 export const getDeleteSupplementMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1822,13 +1862,15 @@ export type DeleteSupplementMutationResult = NonNullable<
   Awaited<ReturnType<typeof deleteSupplement>>
 >;
 
-export type DeleteSupplementMutationError = ErrorType<unknown>;
+export type DeleteSupplementMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Remove a supplement
  */
 export const useDeleteSupplement = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1869,7 +1911,7 @@ export const getListIntegrationsQueryKey = () => {
 
 export const getListIntegrationsQueryOptions = <
   TData = Awaited<ReturnType<typeof listIntegrations>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof listIntegrations>>,
@@ -1896,7 +1938,9 @@ export const getListIntegrationsQueryOptions = <
 export type ListIntegrationsQueryResult = NonNullable<
   Awaited<ReturnType<typeof listIntegrations>>
 >;
-export type ListIntegrationsQueryError = ErrorType<unknown>;
+export type ListIntegrationsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary List integrations
@@ -1904,7 +1948,7 @@ export type ListIntegrationsQueryError = ErrorType<unknown>;
 
 export function useListIntegrations<
   TData = Awaited<ReturnType<typeof listIntegrations>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof listIntegrations>>,
@@ -1940,7 +1984,7 @@ export const connectIntegration = async (
 };
 
 export const getConnectIntegrationMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -1981,13 +2025,15 @@ export type ConnectIntegrationMutationResult = NonNullable<
   Awaited<ReturnType<typeof connectIntegration>>
 >;
 
-export type ConnectIntegrationMutationError = ErrorType<unknown>;
+export type ConnectIntegrationMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Initiate or simulate a connection
  */
 export const useConnectIntegration = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2024,7 +2070,7 @@ export const disconnectIntegration = async (
 };
 
 export const getDisconnectIntegrationMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2065,13 +2111,15 @@ export type DisconnectIntegrationMutationResult = NonNullable<
   Awaited<ReturnType<typeof disconnectIntegration>>
 >;
 
-export type DisconnectIntegrationMutationError = ErrorType<unknown>;
+export type DisconnectIntegrationMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Disconnect an integration
  */
 export const useDisconnectIntegration = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2112,7 +2160,7 @@ export const getGetDashboardQueryKey = () => {
 
 export const getGetDashboardQueryOptions = <
   TData = Awaited<ReturnType<typeof getDashboard>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getDashboard>>,
@@ -2139,7 +2187,9 @@ export const getGetDashboardQueryOptions = <
 export type GetDashboardQueryResult = NonNullable<
   Awaited<ReturnType<typeof getDashboard>>
 >;
-export type GetDashboardQueryError = ErrorType<unknown>;
+export type GetDashboardQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Composite dashboard payload
@@ -2147,7 +2197,7 @@ export type GetDashboardQueryError = ErrorType<unknown>;
 
 export function useGetDashboard<
   TData = Awaited<ReturnType<typeof getDashboard>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getDashboard>>,
@@ -2187,7 +2237,7 @@ export const getGetInsightsQueryKey = () => {
 
 export const getGetInsightsQueryOptions = <
   TData = Awaited<ReturnType<typeof getInsights>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getInsights>>,
@@ -2214,7 +2264,9 @@ export const getGetInsightsQueryOptions = <
 export type GetInsightsQueryResult = NonNullable<
   Awaited<ReturnType<typeof getInsights>>
 >;
-export type GetInsightsQueryError = ErrorType<unknown>;
+export type GetInsightsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary AI insight cards
@@ -2222,7 +2274,7 @@ export type GetInsightsQueryError = ErrorType<unknown>;
 
 export function useGetInsights<
   TData = Awaited<ReturnType<typeof getInsights>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(options?: {
   query?: UseQueryOptions<
     Awaited<ReturnType<typeof getInsights>>,
@@ -2260,7 +2312,7 @@ export const sendChatMessage = async (
 };
 
 export const getSendChatMessageMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2301,13 +2353,15 @@ export type SendChatMessageMutationResult = NonNullable<
   Awaited<ReturnType<typeof sendChatMessage>>
 >;
 export type SendChatMessageMutationBody = BodyType<SendChatBody>;
-export type SendChatMessageMutationError = ErrorType<unknown>;
+export type SendChatMessageMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Send a chat message and get AI response
  */
 export const useSendChatMessage = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2361,7 +2415,7 @@ export const getGetChatHistoryQueryKey = (params?: GetChatHistoryParams) => {
 
 export const getGetChatHistoryQueryOptions = <
   TData = Awaited<ReturnType<typeof getChatHistory>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: GetChatHistoryParams,
   options?: {
@@ -2391,7 +2445,9 @@ export const getGetChatHistoryQueryOptions = <
 export type GetChatHistoryQueryResult = NonNullable<
   Awaited<ReturnType<typeof getChatHistory>>
 >;
-export type GetChatHistoryQueryError = ErrorType<unknown>;
+export type GetChatHistoryQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
 
 /**
  * @summary Recent chat messages
@@ -2399,7 +2455,7 @@ export type GetChatHistoryQueryError = ErrorType<unknown>;
 
 export function useGetChatHistory<
   TData = Awaited<ReturnType<typeof getChatHistory>>,
-  TError = ErrorType<unknown>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
 >(
   params?: GetChatHistoryParams,
   options?: {
