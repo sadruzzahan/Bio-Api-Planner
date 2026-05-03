@@ -79,6 +79,14 @@ router.post("/chat", async (req, res): Promise<void> => {
         contextSnapshot: {},
       })
       .returning();
+    await recordAudit({
+      userId,
+      action: "create",
+      entity: "chat.message",
+      entityId: assistantMsg?.id,
+      metadata: { role: "assistant", reason: "integration_unavailable" },
+      req,
+    });
     res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
     return;
   }
@@ -123,6 +131,14 @@ router.post("/chat", async (req, res): Promise<void> => {
         contextSnapshot: { state: currentState ?? null, biometricsCount: recentBiometrics.length },
       })
       .returning();
+    await recordAudit({
+      userId,
+      action: "create",
+      entity: "chat.message",
+      entityId: assistantMsg?.id,
+      metadata: { role: "assistant", length: assistantText.length },
+      req,
+    });
 
     res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
   } catch {
@@ -135,6 +151,14 @@ router.post("/chat", async (req, res): Promise<void> => {
         contextSnapshot: {},
       })
       .returning();
+    await recordAudit({
+      userId,
+      action: "create",
+      entity: "chat.message",
+      entityId: assistantMsg?.id,
+      metadata: { role: "assistant", reason: "ai_error" },
+      req,
+    });
     res.json(SendChatMessageResponse.parse({ userMessage: userMsg, assistantMessage: assistantMsg }));
   }
 });

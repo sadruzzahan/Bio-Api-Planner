@@ -56,10 +56,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const displayName =
     user?.name || clerkUser?.fullName || clerkUser?.username || "Operator";
-  const displayEmail =
-    user?.email ||
-    clerkUser?.primaryEmailAddress?.emailAddress ||
-    "";
+  const displayEmail = clerkUser?.primaryEmailAddress?.emailAddress || "";
   const initials = (displayName || "OP")
     .split(/\s+/)
     .map((w) => w[0])

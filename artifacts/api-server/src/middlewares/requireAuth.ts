@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { logger } from "../lib/logger";
 import { encrypt, emailLookupHash } from "../lib/encryption";
@@ -125,7 +125,6 @@ async function resolveInternalUser(
       .insert(usersTable)
       .values({
         clerkId: clerkUserId,
-        email: primaryEmail,
         emailEncrypted: encrypt(primaryEmail),
         emailLookup: emailLookupHash(primaryEmail),
         name: displayName,
@@ -137,7 +136,11 @@ async function resolveInternalUser(
   } catch (err: unknown) {
     // Surface the email-unique violation distinctly. Pg error code 23505 = unique_violation.
     const pgErr = err as { code?: string; constraint?: string };
-    if (pgErr?.code === "23505" && pgErr?.constraint?.includes("email")) {
+    if (
+      pgErr?.code === "23505" &&
+      (pgErr?.constraint?.includes("email_lookup") ||
+        pgErr?.constraint?.includes("email"))
+    ) {
       throw new AuthError(
         409,
         "An account with this email already exists. Please contact support to link your accounts.",

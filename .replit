@@ -38,4 +38,3 @@ channel = "stable-25_05"
 
 [userenv.shared]
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_YnJpZWYtdGFkcG9sZS00Mi5jbGVyay5hY2NvdW50cy5kZXYk"
-APP_ENCRYPTION_KEY = "IJl0P4wKgeTPJSK2vKML77gPXSmGlUY5QZmtTi+OnpU="

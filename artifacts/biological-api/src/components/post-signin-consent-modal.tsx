@@ -70,9 +70,50 @@ export function PostSigninConsentModal({ children }: { children: React.ReactNode
     );
   }
 
-  // If the consent endpoint is unreachable, fail open so a transient API
-  // outage doesn't lock every user out — but only for the page session.
-  if (isError || missingDocs.length === 0) {
+  // If the consent endpoint is unreachable we MUST fail closed: rendering
+  // the app without a verified consent state would let an operator perform
+  // sensitive actions (chat, integrations) before they have legally agreed
+  // to the current Terms / Privacy / Disclaimer. Show a hard error screen
+  // with a retry instead.
+  if (isError) {
+    return (
+      <div
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-background p-6"
+        data-testid="consent-error"
+      >
+        <div className="max-w-md text-center space-y-4">
+          <h1 className="font-mono uppercase tracking-wider text-base text-destructive">
+            Unable to verify your consent state
+          </h1>
+          <p className="font-mono text-xs text-muted-foreground">
+            We couldn't load your privacy preferences. Until we can confirm
+            you have accepted the current legal documents, the app is locked
+            for your protection. Check your connection and try again.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="font-mono uppercase tracking-wider text-xs px-4 py-2 border border-primary text-primary rounded hover:bg-primary/10"
+              data-testid="consent-error-retry"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut({ redirectUrl: window.location.origin })}
+              className="font-mono uppercase tracking-wider text-xs px-4 py-2 border border-border text-muted-foreground rounded hover:bg-accent"
+              data-testid="consent-error-signout"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (missingDocs.length === 0) {
     return <>{children}</>;
   }
 

@@ -776,9 +776,13 @@ components:
 
     User:
       type: object
+      description: |
+        The current user's profile. The user's email address is intentionally
+        omitted — it is encrypted at rest and only ever returned via the
+        privacy export. Clients should source the email from the auth
+        provider (Clerk) instead.
       properties:
         id: { type: integer }
-        email: { type: string }
         name: { type: string }
         role: { type: string }
         tier: { type: string }
@@ -786,7 +790,7 @@ components:
         primaryGoal: { type: string }
         onboardedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
-      required: [ id, email, name, role, tier, chronotype, primaryGoal, createdAt ]
+      required: [ id, name, role, tier, chronotype, primaryGoal, createdAt ]
 
     UpdateUserBody:
       type: object

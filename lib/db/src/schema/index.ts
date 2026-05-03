@@ -18,14 +18,13 @@ export const usersTable = pgTable(
   {
     id: serial("id").primaryKey(),
     clerkId: text("clerk_id").unique().notNull(),
-    // Plaintext email is retained for backwards compatibility with the existing
-    // unique index and external lookups (Clerk webhooks, support tooling). The
-    // `emailEncrypted` column holds the AES-256-GCM ciphertext intended for
-    // disk-at-rest exposure, and `emailLookup` holds a deterministic SHA-256
-    // hash used as the unique-search key when callers don't have the raw email.
-    email: text("email").notNull().unique(),
-    emailEncrypted: text("email_encrypted"),
-    emailLookup: text("email_lookup").unique(),
+    // Field-level encryption for the user's email address. The plaintext email
+    // is NEVER persisted — `emailEncrypted` is the AES-256-GCM ciphertext
+    // (key from APP_ENCRYPTION_KEY secret) and `emailLookup` is a
+    // deterministic HMAC-SHA-256 used as the unique-search key when callers
+    // need to look a user up by email without holding the decryption key.
+    emailEncrypted: text("email_encrypted").notNull(),
+    emailLookup: text("email_lookup").notNull().unique(),
     name: text("name").notNull(),
     role: text("role").notNull().default("user"),
     tier: text("tier").notNull().default("basic"),

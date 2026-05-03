@@ -19,7 +19,12 @@ import {
 } from "@workspace/db";
 import { recordAudit } from "../lib/audit";
 import { logger } from "../lib/logger";
-import { decryptSecretsInObject, SECRET_INTEGRATION_FIELDS } from "../lib/encryption";
+import {
+  decrypt,
+  decryptSecretsInObject,
+  emailLookupHash,
+  SECRET_INTEGRATION_FIELDS,
+} from "../lib/encryption";
 import { desc, isNotNull, lte } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -101,11 +106,15 @@ router.get("/users/me/export", async (req, res): Promise<void> => {
           : row.metadata,
     }));
 
-    // Strip the at-rest email ciphertext from the user copy; the plaintext
-    // `email` column is already in the row.
+    // Decrypt the email field for the export only — the user owns this data
+    // and explicitly asked for an archive. Strip the deterministic lookup
+    // hash (it leaks the keying material if combined with a known email).
     const userExport = user.map((u) => {
-      const { emailEncrypted: _e, emailLookup: _l, ...rest } = u;
-      return rest;
+      const { emailEncrypted, emailLookup: _lookup, ...rest } = u;
+      return {
+        ...rest,
+        email: emailEncrypted ? decrypt(emailEncrypted) : null,
+      };
     });
 
     const payload = {
@@ -178,7 +187,7 @@ router.delete("/users/me", async (req, res): Promise<void> => {
 
   if (
     typeof body.confirmEmail !== "string" ||
-    body.confirmEmail.trim().toLowerCase() !== user.email.toLowerCase()
+    emailLookupHash(body.confirmEmail.trim().toLowerCase()) !== user.emailLookup
   ) {
     res.status(400).json({
       error:

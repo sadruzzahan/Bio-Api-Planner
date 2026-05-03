@@ -1,5 +1,6 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db, interventionsTable, biologicalStatesTable } from "@workspace/db";
+import { recordAudit } from "./audit";
 
 interface BiologicalStateRow {
   userId: number;
@@ -105,7 +106,16 @@ export async function planInterventions(userId: number, state: BiologicalStateRo
         .insert(interventionsTable)
         .values({ userId, ...tmpl, status: "pending", payload: tmpl.payload })
         .returning();
-      created.push(row);
+      if (row) {
+        await recordAudit({
+          userId,
+          action: "create",
+          entity: "intervention",
+          entityId: row.id,
+          metadata: { type: row.type, source: "auto_plan" },
+        });
+        created.push(row);
+      }
     }
   }
 

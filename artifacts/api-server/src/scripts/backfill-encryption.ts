@@ -1,22 +1,30 @@
+/**
+ * One-shot backfill that historically populated `users.email_encrypted` /
+ * `users.email_lookup` from the now-removed plaintext `users.email` column.
+ *
+ * After migration 0003 dropped that column, the script keeps the same
+ * invocation surface but acts as an integrity probe: it asserts every row
+ * already carries the encrypted + lookup columns and exits non-zero
+ * otherwise. This keeps the deploy pipeline honest if a future migration
+ * is misordered.
+ */
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { encrypt, emailLookupHash } from "../lib/encryption";
 
 async function main() {
-  const rows = await db.execute(sql`
-    SELECT id, email FROM users
-     WHERE email_lookup IS NULL OR email_encrypted IS NULL
+  const missing = await db.execute(sql`
+    SELECT count(*)::int AS missing FROM users
+     WHERE email_encrypted IS NULL OR email_lookup IS NULL
   `);
-  let n = 0;
-  for (const r of rows.rows as Array<{ id: number; email: string }>) {
-    await db.execute(sql`
-      UPDATE users
-         SET email_encrypted = ${encrypt(r.email)},
-             email_lookup    = ${emailLookupHash(r.email)}
-       WHERE id = ${r.id}`);
-    n++;
+  const n = Number((missing.rows as Array<{ missing: number }>)[0]?.missing ?? 0);
+  if (n > 0) {
+    console.error(
+      `❌ ${n} user(s) missing email_encrypted/email_lookup. ` +
+        `Plaintext email column has already been dropped — manual recovery required.`,
+    );
+    process.exit(2);
   }
-  console.log(`Backfilled ${n} user(s) with encrypted email + lookup hash.`);
+  console.log("✅ All user rows have encrypted email + lookup hash.");
   process.exit(0);
 }
 

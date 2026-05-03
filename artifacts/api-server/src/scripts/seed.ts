@@ -13,6 +13,10 @@ import {
   integrationsTable,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { encrypt, emailLookupHash } from "../lib/encryption";
+
+const SEED_EMAIL = "alex@biohack.io";
+const SEED_EMAIL_LOOKUP = emailLookupHash(SEED_EMAIL);
 
 function rng(seed: number) {
   let s = seed;
@@ -33,7 +37,7 @@ async function seed() {
   console.log("Seeding database...");
 
   // Clean existing demo user data
-  const existing = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.email, "alex@biohack.io"));
+  const existing = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.emailLookup, SEED_EMAIL_LOOKUP));
   if (existing.length > 0) {
     const uid = existing[0]!.id;
     await db.delete(chatMessagesTable).where(eq(chatMessagesTable.userId, uid));
@@ -52,16 +56,17 @@ async function seed() {
   const [user] = await db
     .insert(usersTable)
     .values({
-      email: "alex@biohack.io",
+      emailEncrypted: encrypt(SEED_EMAIL),
+      emailLookup: SEED_EMAIL_LOOKUP,
+      // Sentinel value so this seed account is never matched by a real Clerk
+      // user (Clerk IDs always start with "user_"). Useful for local dev /
+      // demos and lets us inspect or reseed without colliding with auth.
+      clerkId: "__demo_seed__",
       name: "Alex Chen",
       tier: "optimize",
       chronotype: "intermediate",
       primaryGoal: "performance",
       onboardedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-      // Sentinel value so this seed account is never matched by a real Clerk
-      // user (Clerk IDs always start with "user_"). Useful for local dev /
-      // demos and lets us inspect or reseed without colliding with auth.
-      clerkId: "__demo_seed__",
     })
     .returning();
   const userId = user!.id;

@@ -75,7 +75,7 @@ export default function Profile() {
   const displayName =
     clerkUser?.fullName || clerkUser?.username || user?.name || "Operator";
   const displayEmail =
-    clerkUser?.primaryEmailAddress?.emailAddress || user?.email || "";
+    clerkUser?.primaryEmailAddress?.emailAddress || "";
   const initials = (displayName || "OP")
     .split(/\s+/)
     .map((w) => w[0])
