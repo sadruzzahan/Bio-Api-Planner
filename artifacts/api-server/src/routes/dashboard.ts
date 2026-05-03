@@ -13,7 +13,6 @@ import {
 import { GetDashboardResponse } from "@workspace/api-zod";
 import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
-import { generateInsightCards } from "./insights";
 import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
@@ -31,7 +30,7 @@ router.get("/dashboard", async (req, res): Promise<void> => {
   const state = await classifyBiologicalState(userId);
   await planInterventions(userId, state);
 
-  const [biometrics, lastSleep, glucoseRows, activityRows, pendingRows, recentInsights] =
+  const [biometrics, lastSleep, glucoseRows, activityRows, pendingRows] =
     await Promise.all([
       db.select().from(biometricReadingsTable)
         .where(and(eq(biometricReadingsTable.userId, userId), gte(biometricReadingsTable.recordedAt, h24))),
@@ -45,8 +44,8 @@ router.get("/dashboard", async (req, res): Promise<void> => {
       db.select().from(interventionsTable)
         .where(and(eq(interventionsTable.userId, userId), eq(interventionsTable.status, "pending")))
         .orderBy(desc(interventionsTable.triggeredAt)).limit(3),
-      generateInsightCards(userId),
     ]);
+  const recentInsights: [] = [];
 
   const steps = biometrics.filter((b) => b.metric === "steps").reduce((s, b) => s + b.value, 0);
   const hrReadings = biometrics.filter((b) => b.metric === "heart_rate");

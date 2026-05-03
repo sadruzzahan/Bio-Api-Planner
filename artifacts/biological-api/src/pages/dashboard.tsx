@@ -1,18 +1,19 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetDashboard, useUpdateIntervention, getGetDashboardQueryKey } from "@workspace/api-client-react";
+import { useGetDashboard, useGetInsights, useUpdateIntervention, getGetDashboardQueryKey } from "@workspace/api-client-react";
 import type { Insight, Intervention } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, AlertTriangle, Brain, Check, Shield, Target, X, Zap } from "lucide-react";
+import { Activity, AlertTriangle, Brain, Check, Loader2, Shield, Target, X, Zap } from "lucide-react";
 import { Layout } from "@/components/layout";
 import { toast } from "sonner";
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: dashboard, isLoading } = useGetDashboard();
+  const { data: insightsData, isLoading: insightsLoading } = useGetInsights();
   const updateIntervention = useUpdateIntervention();
 
   const handleInterventionAction = (id: number, status: "executed" | "dismissed") => {
@@ -46,7 +47,8 @@ export default function Dashboard() {
     );
   }
 
-  const { state, summary, pendingInterventions, recentInsights } = dashboard;
+  const { state, summary, pendingInterventions } = dashboard;
+  const recentInsights: Insight[] = insightsData ?? [];
 
   const stateColors: Record<string, string> = {
     peak: "text-green-500 border-green-500/20 bg-green-500/10",
@@ -157,7 +159,16 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {recentInsights?.map((insight: Insight) => (
+              {insightsLoading && (
+                <div
+                  className="flex items-center justify-center gap-2 p-6 text-muted-foreground font-mono text-sm border border-dashed border-border rounded-md"
+                  data-testid="insights-loading"
+                >
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span>Generating insights…</span>
+                </div>
+              )}
+              {!insightsLoading && recentInsights.map((insight: Insight) => (
                 <div key={insight.id} className="p-4 rounded-md border border-border bg-background/50" data-testid={`insight-${insight.id}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant={insight.severity === "high" ? "destructive" : "default"} className="font-mono text-[10px] uppercase">
@@ -168,7 +179,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">{insight.body}</p>
                 </div>
               ))}
-              {!recentInsights?.length && (
+              {!insightsLoading && !recentInsights.length && (
                 <div className="text-center p-4 text-muted-foreground font-mono text-sm border border-dashed border-border rounded-md">
                   No active insights. System operating normally.
                 </div>
