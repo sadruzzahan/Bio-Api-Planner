@@ -5,14 +5,29 @@
  * Biological API — programmable optimization interface for human biology
  * OpenAPI spec version: 0.1.0
  */
+import type { IntegrationCategory } from "./integrationCategory";
 import type { IntegrationMetadata } from "./integrationMetadata";
+import type { IntegrationStatus } from "./integrationStatus";
 
 export interface Integration {
-  id: number;
-  userId: number;
+  /** Null when the user has never interacted with this provider — UI shows it as a catalogue entry to be connected. */
+  id?: number | null;
+  userId?: number | null;
   provider: string;
-  category: string;
-  status: string;
+  category: IntegrationCategory;
+  displayName: string;
+  description: string;
+  status: IntegrationStatus;
+  scopes?: string[] | null;
   connectedAt?: Date | null;
+  disconnectedAt?: Date | null;
+  lastSyncAt?: Date | null;
+  nextSyncAt?: Date | null;
+  tokenExpiresAt?: Date | null;
+  lastError?: string | null;
+  /** Server has the provider's OAuth client_id/secret configured. */
+  configured: boolean;
+  sandbox: boolean;
+  supportsWebhooks: boolean;
   metadata: IntegrationMetadata;
 }

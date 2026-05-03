@@ -607,7 +607,7 @@ paths:
     get:
       operationId: listIntegrations
       tags: [ integrations ]
-      summary: List integrations
+      summary: List the user's integration catalogue (configured + unconfigured)
       responses:
         "200":
           description: OK
@@ -622,11 +622,39 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /integrations/{provider}/connect:
-    post:
-      operationId: connectIntegration
+  /integrations/{provider}/authorize-url:
+    get:
+      operationId: getIntegrationAuthorizeUrl
       tags: [ integrations ]
-      summary: Initiate or simulate a connection
+      summary: Build the provider's hosted OAuth authorize URL for the current user
+      parameters:
+        - in: path
+          name: provider
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationAuthorizeUrl"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "503":
+          description: Provider not configured on this server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationConfigError"
+
+  /integrations/{provider}:
+    delete:
+      operationId: disconnectIntegration
+      tags: [ integrations ]
+      summary: Disconnect an integration and revoke tokens
       parameters:
         - in: path
           name: provider
@@ -644,23 +672,49 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  /integrations/{provider}:
-    delete:
-      operationId: disconnectIntegration
+  /integrations/{id}/sync:
+    post:
+      operationId: syncIntegrationNow
       tags: [ integrations ]
-      summary: Disconnect an integration
+      summary: Trigger a manual sync for an integration
       parameters:
         - in: path
-          name: provider
+          name: id
           required: true
-          schema: { type: string }
+          schema: { type: integer }
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Integration"
+                $ref: "#/components/schemas/IntegrationSyncResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Integration not found
+
+  /integrations/{id}/runs:
+    get:
+      operationId: listIntegrationSyncRuns
+      tags: [ integrations ]
+      summary: Recent sync attempts for an integration
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntegrationSyncRun"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1181,14 +1235,63 @@ components:
     Integration:
       type: object
       properties:
-        id: { type: integer }
-        userId: { type: integer }
+        id: { type: integer, nullable: true, description: "Null when the user has never interacted with this provider — UI shows it as a catalogue entry to be connected." }
+        userId: { type: integer, nullable: true }
         provider: { type: string }
-        category: { type: string }
-        status: { type: string }
+        category: { type: string, enum: [ wearable, cgm ] }
+        displayName: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [ disconnected, connecting, connected, needs_reauth, error ] }
+        scopes:
+          type: array
+          items: { type: string }
+          nullable: true
         connectedAt: { type: string, format: date-time, nullable: true }
+        disconnectedAt: { type: string, format: date-time, nullable: true }
+        lastSyncAt: { type: string, format: date-time, nullable: true }
+        nextSyncAt: { type: string, format: date-time, nullable: true }
+        tokenExpiresAt: { type: string, format: date-time, nullable: true }
+        lastError: { type: string, nullable: true }
+        configured: { type: boolean, description: "Server has the provider's OAuth client_id/secret configured." }
+        sandbox: { type: boolean }
+        supportsWebhooks: { type: boolean }
         metadata: { type: object, additionalProperties: true }
-      required: [ id, userId, provider, category, status, metadata ]
+      required: [ provider, category, displayName, description, status, configured, sandbox, supportsWebhooks, metadata ]
+
+    IntegrationAuthorizeUrl:
+      type: object
+      properties:
+        url: { type: string }
+      required: [ url ]
+
+    IntegrationConfigError:
+      type: object
+      properties:
+        error: { type: string }
+        provider: { type: string }
+        missing: { type: string }
+      required: [ error, provider ]
+
+    IntegrationSyncResult:
+      type: object
+      properties:
+        status: { type: string, enum: [ success, skipped, failed ] }
+        recordsIngested: { type: integer }
+        error: { type: string, nullable: true }
+      required: [ status, recordsIngested ]
+
+    IntegrationSyncRun:
+      type: object
+      properties:
+        id: { type: integer }
+        integrationId: { type: integer }
+        trigger: { type: string }
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        status: { type: string }
+        recordsIngested: { type: integer }
+        error: { type: string, nullable: true }
+      required: [ id, integrationId, trigger, startedAt, status, recordsIngested ]
 
     DashboardSummary:
       type: object

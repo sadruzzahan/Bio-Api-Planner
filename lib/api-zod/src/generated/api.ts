@@ -465,52 +465,128 @@ export const DeleteSupplementParams = zod.object({
 });
 
 /**
- * @summary List integrations
+ * @summary List the user's integration catalogue (configured + unconfigured)
  */
 export const ListIntegrationsResponseItem = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
+  id: zod
+    .number()
+    .nullish()
+    .describe(
+      "Null when the user has never interacted with this provider — UI shows it as a catalogue entry to be connected.",
+    ),
+  userId: zod.number().nullish(),
   provider: zod.string(),
-  category: zod.string(),
-  status: zod.string(),
+  category: zod.enum(["wearable", "cgm"]),
+  displayName: zod.string(),
+  description: zod.string(),
+  status: zod.enum([
+    "disconnected",
+    "connecting",
+    "connected",
+    "needs_reauth",
+    "error",
+  ]),
+  scopes: zod.array(zod.string()).nullish(),
   connectedAt: zod.coerce.date().nullish(),
+  disconnectedAt: zod.coerce.date().nullish(),
+  lastSyncAt: zod.coerce.date().nullish(),
+  nextSyncAt: zod.coerce.date().nullish(),
+  tokenExpiresAt: zod.coerce.date().nullish(),
+  lastError: zod.string().nullish(),
+  configured: zod
+    .boolean()
+    .describe("Server has the provider's OAuth client_id\/secret configured."),
+  sandbox: zod.boolean(),
+  supportsWebhooks: zod.boolean(),
   metadata: zod.record(zod.string(), zod.unknown()),
 });
 export const ListIntegrationsResponse = zod.array(ListIntegrationsResponseItem);
 
 /**
- * @summary Initiate or simulate a connection
+ * @summary Build the provider's hosted OAuth authorize URL for the current user
  */
-export const ConnectIntegrationParams = zod.object({
+export const GetIntegrationAuthorizeUrlParams = zod.object({
   provider: zod.coerce.string(),
 });
 
-export const ConnectIntegrationResponse = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
-  provider: zod.string(),
-  category: zod.string(),
-  status: zod.string(),
-  connectedAt: zod.coerce.date().nullish(),
-  metadata: zod.record(zod.string(), zod.unknown()),
+export const GetIntegrationAuthorizeUrlResponse = zod.object({
+  url: zod.string(),
 });
 
 /**
- * @summary Disconnect an integration
+ * @summary Disconnect an integration and revoke tokens
  */
 export const DisconnectIntegrationParams = zod.object({
   provider: zod.coerce.string(),
 });
 
 export const DisconnectIntegrationResponse = zod.object({
-  id: zod.number(),
-  userId: zod.number(),
+  id: zod
+    .number()
+    .nullish()
+    .describe(
+      "Null when the user has never interacted with this provider — UI shows it as a catalogue entry to be connected.",
+    ),
+  userId: zod.number().nullish(),
   provider: zod.string(),
-  category: zod.string(),
-  status: zod.string(),
+  category: zod.enum(["wearable", "cgm"]),
+  displayName: zod.string(),
+  description: zod.string(),
+  status: zod.enum([
+    "disconnected",
+    "connecting",
+    "connected",
+    "needs_reauth",
+    "error",
+  ]),
+  scopes: zod.array(zod.string()).nullish(),
   connectedAt: zod.coerce.date().nullish(),
+  disconnectedAt: zod.coerce.date().nullish(),
+  lastSyncAt: zod.coerce.date().nullish(),
+  nextSyncAt: zod.coerce.date().nullish(),
+  tokenExpiresAt: zod.coerce.date().nullish(),
+  lastError: zod.string().nullish(),
+  configured: zod
+    .boolean()
+    .describe("Server has the provider's OAuth client_id\/secret configured."),
+  sandbox: zod.boolean(),
+  supportsWebhooks: zod.boolean(),
   metadata: zod.record(zod.string(), zod.unknown()),
 });
+
+/**
+ * @summary Trigger a manual sync for an integration
+ */
+export const SyncIntegrationNowParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const SyncIntegrationNowResponse = zod.object({
+  status: zod.enum(["success", "skipped", "failed"]),
+  recordsIngested: zod.number(),
+  error: zod.string().nullish(),
+});
+
+/**
+ * @summary Recent sync attempts for an integration
+ */
+export const ListIntegrationSyncRunsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListIntegrationSyncRunsResponseItem = zod.object({
+  id: zod.number(),
+  integrationId: zod.number(),
+  trigger: zod.string(),
+  startedAt: zod.coerce.date(),
+  finishedAt: zod.coerce.date().nullish(),
+  status: zod.string(),
+  recordsIngested: zod.number(),
+  error: zod.string().nullish(),
+});
+export const ListIntegrationSyncRunsResponse = zod.array(
+  ListIntegrationSyncRunsResponseItem,
+);
 
 /**
  * @summary Composite dashboard payload

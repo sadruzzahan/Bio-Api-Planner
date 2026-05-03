@@ -13,7 +13,8 @@ export type AuditAction =
   | "account.delete.cancel"
   | "account.delete.purge"
   | "auth.signin"
-  | "auth.signup";
+  | "auth.signup"
+  | "integration.sync";
 
 export interface AuditOptions {
   userId: number;

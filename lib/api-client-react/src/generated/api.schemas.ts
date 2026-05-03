@@ -286,16 +286,84 @@ export interface UpdateSupplementBody {
   active?: boolean;
 }
 
+export type IntegrationCategory =
+  (typeof IntegrationCategory)[keyof typeof IntegrationCategory];
+
+export const IntegrationCategory = {
+  wearable: "wearable",
+  cgm: "cgm",
+} as const;
+
+export type IntegrationStatus =
+  (typeof IntegrationStatus)[keyof typeof IntegrationStatus];
+
+export const IntegrationStatus = {
+  disconnected: "disconnected",
+  connecting: "connecting",
+  connected: "connected",
+  needs_reauth: "needs_reauth",
+  error: "error",
+} as const;
+
 export type IntegrationMetadata = { [key: string]: unknown };
 
 export interface Integration {
-  id: number;
-  userId: number;
+  /** Null when the user has never interacted with this provider — UI shows it as a catalogue entry to be connected. */
+  id?: number | null;
+  userId?: number | null;
   provider: string;
-  category: string;
-  status: string;
+  category: IntegrationCategory;
+  displayName: string;
+  description: string;
+  status: IntegrationStatus;
+  scopes?: string[] | null;
   connectedAt?: string | null;
+  disconnectedAt?: string | null;
+  lastSyncAt?: string | null;
+  nextSyncAt?: string | null;
+  tokenExpiresAt?: string | null;
+  lastError?: string | null;
+  /** Server has the provider's OAuth client_id/secret configured. */
+  configured: boolean;
+  sandbox: boolean;
+  supportsWebhooks: boolean;
   metadata: IntegrationMetadata;
+}
+
+export interface IntegrationAuthorizeUrl {
+  url: string;
+}
+
+export interface IntegrationConfigError {
+  error: string;
+  provider: string;
+  missing?: string;
+}
+
+export type IntegrationSyncResultStatus =
+  (typeof IntegrationSyncResultStatus)[keyof typeof IntegrationSyncResultStatus];
+
+export const IntegrationSyncResultStatus = {
+  success: "success",
+  skipped: "skipped",
+  failed: "failed",
+} as const;
+
+export interface IntegrationSyncResult {
+  status: IntegrationSyncResultStatus;
+  recordsIngested: number;
+  error?: string | null;
+}
+
+export interface IntegrationSyncRun {
+  id: number;
+  integrationId: number;
+  trigger: string;
+  startedAt: string;
+  finishedAt?: string | null;
+  status: string;
+  recordsIngested: number;
+  error?: string | null;
 }
 
 export interface DashboardSummary {

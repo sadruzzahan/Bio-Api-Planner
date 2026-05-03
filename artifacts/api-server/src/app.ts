@@ -42,8 +42,20 @@ app.use(securityHeaders);
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Webhook receivers (provider → us) need access to the raw request body to
+// verify HMAC signatures. They MUST be mounted before the global JSON parser
+// — otherwise express.json() consumes the bytes and signature verification
+// fails. Each handler in webhookRouter calls express.raw({type:'*/*'})
+// itself, so we just need to make sure the global parser does not run for
+// those URLs.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/webhooks/")) return next();
+  return express.json()(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/webhooks/")) return next();
+  return express.urlencoded({ extended: true })(req, res, next);
+});
 
 app.use(
   clerkMiddleware((req) => ({

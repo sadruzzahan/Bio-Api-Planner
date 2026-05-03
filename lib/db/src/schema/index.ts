@@ -57,6 +57,16 @@ export const biometricReadingsTable = pgTable(
       t.metric,
       t.recordedAt,
     ),
+    // Natural-key uniqueness: a single (user, source, metric, instant)
+    // tuple may only appear once. Provider sync workers rely on this for
+    // idempotent INSERT ... ON CONFLICT DO NOTHING ingestion. See
+    // migration 0005 for the actual unique index DDL.
+    naturalKeyUq: index("biometric_natural_key_uq").on(
+      t.userId,
+      t.source,
+      t.metric,
+      t.recordedAt,
+    ),
   }),
 );
 
@@ -180,15 +190,69 @@ export const chatMessagesTable = pgTable(
   }),
 );
 
-export const integrationsTable = pgTable("integrations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  provider: text("provider").notNull(),
-  category: text("category").notNull(),
-  status: text("status").notNull().default("disconnected"),
-  connectedAt: timestamp("connected_at", { withTimezone: true }),
-  metadata: jsonb("metadata").notNull().default({}),
-});
+/**
+ * One row per (user, provider) connection. Tokens are encrypted at the
+ * application layer with AES-256-GCM (see api-server/lib/encryption.ts).
+ *
+ * Status state machine:
+ *   disconnected   - never connected, or revoked
+ *   connecting     - OAuth started, awaiting callback
+ *   connected      - active; tokens valid, syncs running
+ *   needs_reauth   - refresh token rejected; user must re-do OAuth
+ *   error          - last sync failed for a non-auth reason; will retry
+ */
+export const integrationsTable = pgTable(
+  "integrations",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    category: text("category").notNull(),
+    status: text("status").notNull().default("disconnected"),
+    scopes: text("scopes").array(),
+    accessTokenEncrypted: text("access_token_encrypted"),
+    refreshTokenEncrypted: text("refresh_token_encrypted"),
+    tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+    externalUserId: text("external_user_id"),
+    lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+    nextSyncAt: timestamp("next_sync_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    connectedAt: timestamp("connected_at", { withTimezone: true }),
+    disconnectedAt: timestamp("disconnected_at", { withTimezone: true }),
+    metadata: jsonb("metadata").notNull().default({}),
+  },
+  (t) => ({
+    userProviderIdx: index("integrations_user_provider_idx").on(t.userId, t.provider),
+    nextSyncIdx: index("integrations_next_sync_idx").on(t.nextSyncAt),
+  }),
+);
+
+/**
+ * One row per sync attempt for observability. The Background Jobs system
+ * (Task #11) will eventually own this — for now the in-process scheduler
+ * writes here directly. Status: 'running' | 'success' | 'failed'.
+ */
+export const syncRunsTable = pgTable(
+  "sync_runs",
+  {
+    id: serial("id").primaryKey(),
+    integrationId: integer("integration_id")
+      .notNull()
+      .references(() => integrationsTable.id, { onDelete: "cascade" }),
+    trigger: text("trigger").notNull().default("scheduled"), // 'initial' | 'scheduled' | 'manual' | 'webhook'
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    status: text("status").notNull().default("running"),
+    recordsIngested: integer("records_ingested").notNull().default(0),
+    error: text("error"),
+  },
+  (t) => ({
+    integrationStartedIdx: index("sync_runs_integration_started_idx").on(
+      t.integrationId,
+      t.startedAt,
+    ),
+  }),
+);
 
 // --- Compliance / Privacy tables ----------------------------------------------
 
@@ -266,6 +330,9 @@ export type ChatMessage = typeof chatMessagesTable.$inferSelect;
 
 export const insertIntegrationSchema = createInsertSchema(integrationsTable).omit({ id: true });
 export type Integration = typeof integrationsTable.$inferSelect;
+
+export const insertSyncRunSchema = createInsertSchema(syncRunsTable).omit({ id: true, startedAt: true });
+export type SyncRun = typeof syncRunsTable.$inferSelect;
 
 export const insertConsentRecordSchema = createInsertSchema(consentRecordsTable).omit({ id: true, acceptedAt: true });
 export type ConsentRecord = typeof consentRecordsTable.$inferSelect;

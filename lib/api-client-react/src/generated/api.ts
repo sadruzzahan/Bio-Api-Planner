@@ -39,6 +39,10 @@ import type {
   HealthStatus,
   Insight,
   Integration,
+  IntegrationAuthorizeUrl,
+  IntegrationConfigError,
+  IntegrationSyncResult,
+  IntegrationSyncRun,
   Intervention,
   ListActivityParams,
   ListAuditLogParams,
@@ -2327,7 +2331,7 @@ export const useDeleteSupplement = <
 };
 
 /**
- * @summary List integrations
+ * @summary List the user's integration catalogue (configured + unconfigured)
  */
 export const getListIntegrationsUrl = () => {
   return `/api/integrations`;
@@ -2380,7 +2384,7 @@ export type ListIntegrationsQueryError = ErrorType<
 >;
 
 /**
- * @summary List integrations
+ * @summary List the user's integration catalogue (configured + unconfigured)
  */
 
 export function useListIntegrations<
@@ -2404,93 +2408,108 @@ export function useListIntegrations<
 }
 
 /**
- * @summary Initiate or simulate a connection
+ * @summary Build the provider's hosted OAuth authorize URL for the current user
  */
-export const getConnectIntegrationUrl = (provider: string) => {
-  return `/api/integrations/${provider}/connect`;
+export const getGetIntegrationAuthorizeUrlUrl = (provider: string) => {
+  return `/api/integrations/${provider}/authorize-url`;
 };
 
-export const connectIntegration = async (
+export const getIntegrationAuthorizeUrl = async (
   provider: string,
   options?: RequestInit,
-): Promise<Integration> => {
-  return customFetch<Integration>(getConnectIntegrationUrl(provider), {
-    ...options,
-    method: "POST",
-  });
+): Promise<IntegrationAuthorizeUrl> => {
+  return customFetch<IntegrationAuthorizeUrl>(
+    getGetIntegrationAuthorizeUrlUrl(provider),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getConnectIntegrationMutationOptions = <
-  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof connectIntegration>>,
+export const getGetIntegrationAuthorizeUrlQueryKey = (provider: string) => {
+  return [`/api/integrations/${provider}/authorize-url`] as const;
+};
+
+export const getGetIntegrationAuthorizeUrlQueryOptions = <
+  TData = Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | IntegrationConfigError
+  >,
+>(
+  provider: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetIntegrationAuthorizeUrlQueryKey(provider);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>
+  > = ({ signal }) =>
+    getIntegrationAuthorizeUrl(provider, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!provider,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>,
     TError,
-    { provider: string },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof connectIntegration>>,
-  TError,
-  { provider: string },
-  TContext
-> => {
-  const mutationKey = ["connectIntegration"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
+    TData
+  > & { queryKey: QueryKey };
+};
 
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof connectIntegration>>,
-    { provider: string }
-  > = (props) => {
-    const { provider } = props ?? {};
+export type GetIntegrationAuthorizeUrlQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>
+>;
+export type GetIntegrationAuthorizeUrlQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | IntegrationConfigError
+>;
 
-    return connectIntegration(provider, requestOptions);
+/**
+ * @summary Build the provider's hosted OAuth authorize URL for the current user
+ */
+
+export function useGetIntegrationAuthorizeUrl<
+  TData = Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>,
+  TError = ErrorType<
+    UnauthorizedResponse | ForbiddenResponse | IntegrationConfigError
+  >,
+>(
+  provider: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIntegrationAuthorizeUrl>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIntegrationAuthorizeUrlQueryOptions(
+    provider,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
   };
 
-  return { mutationFn, ...mutationOptions };
-};
-
-export type ConnectIntegrationMutationResult = NonNullable<
-  Awaited<ReturnType<typeof connectIntegration>>
->;
-
-export type ConnectIntegrationMutationError = ErrorType<
-  UnauthorizedResponse | ForbiddenResponse
->;
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
- * @summary Initiate or simulate a connection
- */
-export const useConnectIntegration = <
-  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof connectIntegration>>,
-    TError,
-    { provider: string },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof connectIntegration>>,
-  TError,
-  { provider: string },
-  TContext
-> => {
-  return useMutation(getConnectIntegrationMutationOptions(options));
-};
-
-/**
- * @summary Disconnect an integration
+ * @summary Disconnect an integration and revoke tokens
  */
 export const getDisconnectIntegrationUrl = (provider: string) => {
   return `/api/integrations/${provider}`;
@@ -2553,7 +2572,7 @@ export type DisconnectIntegrationMutationError = ErrorType<
 >;
 
 /**
- * @summary Disconnect an integration
+ * @summary Disconnect an integration and revoke tokens
  */
 export const useDisconnectIntegration = <
   TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
@@ -2574,6 +2593,183 @@ export const useDisconnectIntegration = <
 > => {
   return useMutation(getDisconnectIntegrationMutationOptions(options));
 };
+
+/**
+ * @summary Trigger a manual sync for an integration
+ */
+export const getSyncIntegrationNowUrl = (id: number) => {
+  return `/api/integrations/${id}/sync`;
+};
+
+export const syncIntegrationNow = async (
+  id: number,
+  options?: RequestInit,
+): Promise<IntegrationSyncResult> => {
+  return customFetch<IntegrationSyncResult>(getSyncIntegrationNowUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSyncIntegrationNowMutationOptions = <
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncIntegrationNow>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof syncIntegrationNow>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["syncIntegrationNow"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof syncIntegrationNow>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return syncIntegrationNow(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SyncIntegrationNowMutationResult = NonNullable<
+  Awaited<ReturnType<typeof syncIntegrationNow>>
+>;
+
+export type SyncIntegrationNowMutationError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse | void
+>;
+
+/**
+ * @summary Trigger a manual sync for an integration
+ */
+export const useSyncIntegrationNow = <
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse | void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof syncIntegrationNow>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof syncIntegrationNow>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getSyncIntegrationNowMutationOptions(options));
+};
+
+/**
+ * @summary Recent sync attempts for an integration
+ */
+export const getListIntegrationSyncRunsUrl = (id: number) => {
+  return `/api/integrations/${id}/runs`;
+};
+
+export const listIntegrationSyncRuns = async (
+  id: number,
+  options?: RequestInit,
+): Promise<IntegrationSyncRun[]> => {
+  return customFetch<IntegrationSyncRun[]>(getListIntegrationSyncRunsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListIntegrationSyncRunsQueryKey = (id: number) => {
+  return [`/api/integrations/${id}/runs`] as const;
+};
+
+export const getListIntegrationSyncRunsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listIntegrationSyncRuns>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listIntegrationSyncRuns>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListIntegrationSyncRunsQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listIntegrationSyncRuns>>
+  > = ({ signal }) =>
+    listIntegrationSyncRuns(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listIntegrationSyncRuns>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListIntegrationSyncRunsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listIntegrationSyncRuns>>
+>;
+export type ListIntegrationSyncRunsQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary Recent sync attempts for an integration
+ */
+
+export function useListIntegrationSyncRuns<
+  TData = Awaited<ReturnType<typeof listIntegrationSyncRuns>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listIntegrationSyncRuns>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListIntegrationSyncRunsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Composite dashboard payload

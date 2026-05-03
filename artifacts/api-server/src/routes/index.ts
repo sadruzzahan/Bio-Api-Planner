@@ -11,7 +11,7 @@ import stateRouter from "./state";
 import interventionsRouter from "./interventions";
 import mealsRouter from "./meals";
 import supplementsRouter from "./supplements";
-import integrationsRouter from "./integrations";
+import integrationsRouter, { webhookRouter } from "./integrations";
 import dashboardRouter from "./dashboard";
 import insightsRouter from "./insights";
 import chatRouter from "./chat";
@@ -22,6 +22,10 @@ const router: IRouter = Router();
 
 // Public routes
 router.use(healthRouter);
+// Webhook receivers must be reachable without a Clerk session — providers
+// post directly from their own infrastructure. Each handler verifies an
+// HMAC signature against the raw body before doing anything.
+router.use(webhookRouter);
 
 // All other routes require an authenticated Clerk session.
 router.use(requireAuth);
