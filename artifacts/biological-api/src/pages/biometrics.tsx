@@ -41,21 +41,30 @@ export default function Biometrics() {
     limit: 200,
   });
 
-  const compareQueries = compareMetrics.map(m => ({
-    metric: m,
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    data: useListBiometrics({ metric: m, from: fromDate, limit: 200 }).data,
-  }));
+  // Always call all 4 hooks unconditionally — never inside a loop/map
+  const { data: cmpHrv } = useListBiometrics({ metric: "hrv_rmssd", from: fromDate, limit: 200 });
+  const { data: cmpHr } = useListBiometrics({ metric: "resting_hr", from: fromDate, limit: 200 });
+  const { data: cmpSpo2 } = useListBiometrics({ metric: "spo2", from: fromDate, limit: 200 });
+  const { data: cmpRecovery } = useListBiometrics({ metric: "recovery_score", from: fromDate, limit: 200 });
+
+  const compareDataMap: Record<string, typeof cmpHrv> = {
+    hrv_rmssd: cmpHrv,
+    resting_hr: cmpHr,
+    spo2: cmpSpo2,
+    recovery_score: cmpRecovery,
+  };
 
   const comparisonChartData = (() => {
     const dateMap: Record<string, Record<string, number>> = {};
-    compareQueries.forEach(({ metric, data }) => {
-      (data ?? []).forEach(entry => {
-        const d = format(parseISO(entry.recordedAt), "MMM dd");
-        if (!dateMap[d]) dateMap[d] = {};
-        dateMap[d][metric] = entry.value;
+    COMPARE_METRICS
+      .filter(m => compareMetrics.includes(m.key))
+      .forEach(({ key }) => {
+        (compareDataMap[key] ?? []).forEach(entry => {
+          const d = format(parseISO(entry.recordedAt), "MMM dd");
+          if (!dateMap[d]) dateMap[d] = {};
+          dateMap[d][key] = entry.value;
+        });
       });
-    });
     return Object.entries(dateMap)
       .map(([date, values]) => ({ date, ...values }))
       .sort((a, b) => a.date.localeCompare(b.date));

@@ -85,19 +85,42 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="border-primary/20 bg-card/50" data-testid="metric-hrv">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium font-mono uppercase text-muted-foreground">Recovery</CardTitle>
-              <Activity className="w-4 h-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold font-mono text-foreground capitalize">{state?.recoveryState || "N/A"}</div>
-            </CardContent>
-          </Card>
+        {/* 5 Biological State Dimensions */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {([
+            { label: "Energy", value: state?.energyState, icon: Zap, testId: "dim-energy" },
+            { label: "Recovery", value: state?.recoveryState, icon: Activity, testId: "dim-recovery" },
+            { label: "Cognitive", value: state?.cognitiveState, icon: Brain, testId: "dim-cognitive" },
+            { label: "Stress", value: state?.stressState, icon: Shield, testId: "dim-stress" },
+            { label: "Metabolic", value: state?.metabolicState, icon: Target, testId: "dim-metabolic" },
+          ] as const).map(({ label, value, icon: Icon, testId }) => {
+            const v = value?.toLowerCase() ?? "";
+            const color = (v === "peak" || v === "optimal" || v === "high" || v === "good")
+              ? "border-green-500/30 text-green-400"
+              : (v === "moderate" || v === "medium")
+              ? "border-yellow-500/30 text-yellow-400"
+              : (v === "low" || v === "fatigued" || v === "stressed" || v === "depleted" || v === "poor")
+              ? "border-red-500/30 text-red-400"
+              : "border-primary/20 text-primary";
+            return (
+              <Card key={label} className={`bg-card/50 border ${color}`} data-testid={testId}>
+                <CardHeader className="flex flex-row items-center justify-between pb-1 pt-3 px-3">
+                  <CardTitle className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">{label}</CardTitle>
+                  <Icon className="w-3.5 h-3.5 opacity-60" />
+                </CardHeader>
+                <CardContent className="px-3 pb-3">
+                  <div className="text-base font-bold font-mono capitalize leading-tight">{value || "—"}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Summary Metrics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="border-primary/20 bg-card/50" data-testid="metric-sleep">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium font-mono uppercase text-muted-foreground">Sleep Eff.</CardTitle>
+              <CardTitle className="text-sm font-medium font-mono uppercase text-muted-foreground">Sleep Efficiency</CardTitle>
               <Brain className="w-4 h-4 text-primary" />
             </CardHeader>
             <CardContent>
