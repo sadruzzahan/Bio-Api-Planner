@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "seed": "npx tsx --tsconfig tsconfig.json src/scripts/seed.ts",
     "test:deletion": "npx tsx --tsconfig tsconfig.json src/scripts/test-deletion-integrity.ts",
+    "test:consent-gate": "npx tsx --tsconfig tsconfig.json src/scripts/test-consent-gate.ts",
     "backfill:encryption": "npx tsx --tsconfig tsconfig.json src/scripts/backfill-encryption.ts",
     "backfill:integration-secrets": "npx tsx --tsconfig tsconfig.json src/scripts/backfill-integration-secrets.ts"
   },

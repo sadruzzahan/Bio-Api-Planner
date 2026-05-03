@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, consentRecordsTable } from "@workspace/db";
 import { recordAudit } from "../lib/audit";
+import { invalidateConsentCache } from "../middlewares/requireConsent";
 
 const router: IRouter = Router();
 
@@ -62,6 +63,10 @@ router.post("/consent", async (req, res): Promise<void> => {
     metadata: { version: body.version },
     req,
   });
+
+  // Invalidate the per-process consent cache so the next request from
+  // this user re-evaluates the gate against the freshly-recorded row.
+  invalidateConsentCache(userId);
 
   res.status(201).json(row);
 });
