@@ -54,6 +54,34 @@ export function CookieConsentBanner() {
     setVisible(readStored() === null);
   }, []);
 
+  // Sync any pre-signin cookie consent (recorded to localStorage on the
+  // landing page before the user authenticated) to the server on the
+  // first authenticated session. Uses a session-scoped flag so we do not
+  // re-POST on every component mount.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const stored = readStored();
+    if (!stored) return;
+    const syncedKey = `${STORAGE_KEY}.synced.${stored.version}`;
+    if (sessionStorage.getItem(syncedKey)) return;
+    try {
+      sessionStorage.setItem(syncedKey, "1");
+    } catch {
+      /* sessionStorage may be disabled — non-fatal */
+    }
+    recordConsent.mutate({
+      data: {
+        document: "cookies",
+        version: stored.version,
+        accepted:
+          stored.categories.analytics || stored.categories.marketing
+            ? true
+            : true, // essential always true → record acceptance either way
+        categories: stored.categories,
+      },
+    });
+  }, [isSignedIn, recordConsent]);
+
   const persist = (
     accepted: boolean,
     categories: StoredConsent["categories"],

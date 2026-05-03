@@ -71,7 +71,7 @@ async function main() {
   await db.execute(sql`INSERT INTO supplements (user_id, name, dose_mg, timing) VALUES (${uid}, 'mag', 300, 'evening')`);
   await db.execute(sql`INSERT INTO chat_messages (user_id, role, content) VALUES (${uid}, 'user', 'hi')`);
   await db.execute(sql`INSERT INTO integrations (user_id, provider, category, status) VALUES (${uid}, 'whoop', 'wearable', 'connected')`);
-  await db.execute(sql`INSERT INTO consent_records (user_id, document, version, accepted) VALUES (${uid}, 'terms', 'v1.0', true)`);
+  await db.execute(sql`INSERT INTO consent_records (user_id, document, version, accepted) VALUES (${uid}, 'tos', 'v1.0', true)`);
   await db.execute(sql`INSERT INTO audit_log (user_id, actor_id, action, entity) VALUES (${uid}, ${uid}, 'create', 'test')`);
 
   // Sanity: every table now has at least one row for this user.
