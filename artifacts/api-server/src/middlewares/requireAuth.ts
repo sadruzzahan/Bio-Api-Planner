@@ -17,7 +17,7 @@ declare global {
   }
 }
 
-type InternalUser = { id: number; role: string };
+type InternalUser = { id: number; role: string; deletedAt: Date | null };
 
 /**
  * Bounded LRU-ish cache mapping Clerk user id -> internal user record.
@@ -38,7 +38,11 @@ function cacheSet(key: string, value: InternalUser): void {
 
 async function findByClerkId(clerkUserId: string): Promise<InternalUser | null> {
   const rows = await db
-    .select({ id: usersTable.id, role: usersTable.role })
+    .select({
+      id: usersTable.id,
+      role: usersTable.role,
+      deletedAt: usersTable.deletedAt,
+    })
     .from(usersTable)
     .where(eq(usersTable.clerkId, clerkUserId))
     .limit(1);
@@ -64,7 +68,11 @@ async function resolveInternalUser(
         .update(usersTable)
         .set({ role: claimedRole })
         .where(eq(usersTable.clerkId, clerkUserId));
-      const updated = { id: cached.id, role: claimedRole };
+      const updated = {
+        id: cached.id,
+        role: claimedRole,
+        deletedAt: cached.deletedAt,
+      };
       cacheSet(clerkUserId, updated);
       return updated;
     }
@@ -119,7 +127,7 @@ async function resolveInternalUser(
   // a previously-used email take over that account's data. If the email is
   // already taken by a row with a different (or null) clerk_id, this insert
   // fails on the email-unique constraint and we surface 409.
-  let inserted: { id: number; role: string } | undefined;
+  let inserted: InternalUser | undefined;
   try {
     const rows = await db
       .insert(usersTable)
@@ -131,7 +139,11 @@ async function resolveInternalUser(
         role: initialRole,
       })
       .onConflictDoNothing({ target: usersTable.clerkId })
-      .returning({ id: usersTable.id, role: usersTable.role });
+      .returning({
+        id: usersTable.id,
+        role: usersTable.role,
+        deletedAt: usersTable.deletedAt,
+      });
     inserted = rows[0];
   } catch (err: unknown) {
     // Surface the email-unique violation distinctly. Pg error code 23505 = unique_violation.
@@ -197,6 +209,24 @@ export const requireAuth: RequestHandler = async (
           ? (claimsMeta.role as string)
           : undefined;
     const internal = await resolveInternalUser(clerkUserId, claimedRole);
+
+    // Deletion lockout: a user who has requested account deletion may not
+    // continue to use or write data during the 30-day soft-delete window.
+    // We return 410 Gone so the client can distinguish this from a generic
+    // 401/403 and force the user to sign out. Clerk session revocation is
+    // best-effort at delete time, but a user could re-authenticate before
+    // the hard purge runs — this check fails closed in that case.
+    if (internal.deletedAt) {
+      // Drop the cached entry so a future undelete (admin support flow)
+      // doesn't keep serving 410 forever.
+      clerkIdToInternal.delete(clerkUserId);
+      res.status(410).json({
+        error: "Account scheduled for deletion",
+        deletedAt: internal.deletedAt.toISOString(),
+      });
+      return;
+    }
+
     req.userId = internal.id;
     req.clerkUserId = clerkUserId;
     req.userRole = internal.role;

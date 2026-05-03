@@ -27,7 +27,6 @@ export * from "./dashboardSummary";
 export * from "./deleteAccountBody";
 export * from "./deleteAccountResponse";
 export * from "./errorBody";
-export * from "./exportMyData200";
 export * from "./forbiddenResponse";
 export * from "./getChatHistoryParams";
 export * from "./getStateHistoryParams";

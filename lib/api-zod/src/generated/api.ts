@@ -74,11 +74,6 @@ export const ListAuditLogResponse = zod.object({
 });
 
 /**
- * @summary Download a JSON archive of all data owned by the current user
- */
-export const ExportMyDataResponse = zod.record(zod.string(), zod.unknown());
-
-/**
  * @summary Soft-delete the current user account (purge after 30 days)
  */
 export const DeleteCurrentUserBody = zod.object({

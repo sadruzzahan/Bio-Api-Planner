@@ -62,7 +62,7 @@ export function PrivacyTab() {
       const a = document.createElement("a");
       a.href = url;
       const ts = new Date().toISOString().replace(/[:.]/g, "-");
-      a.download = `bioos-export-${ts}.json`;
+      a.download = `bioos-export-${ts}.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();

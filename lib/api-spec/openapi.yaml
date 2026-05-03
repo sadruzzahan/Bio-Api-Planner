@@ -107,15 +107,21 @@ paths:
     get:
       operationId: exportMyData
       tags: [ privacy ]
-      summary: Download a JSON archive of all data owned by the current user
+      summary: Download a ZIP archive containing one JSON file per table owned by the current user
+      description: |
+        Returns `application/zip` containing `manifest.json` plus one
+        `<table>.json` per table the user owns (users, biometric_readings,
+        sleep_sessions, glucose_readings, activity_sessions,
+        biological_states, interventions, meals, supplements, chat_messages,
+        integrations, consent_records, audit_log).
       responses:
         "200":
-          description: A downloadable JSON archive
+          description: A downloadable ZIP archive
           content:
-            application/json:
+            application/zip:
               schema:
-                type: object
-                additionalProperties: true
+                type: string
+                format: binary
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":

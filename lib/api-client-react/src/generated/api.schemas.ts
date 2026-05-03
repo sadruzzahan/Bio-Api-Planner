@@ -360,8 +360,6 @@ export type ListAuditLogParams = {
   limit?: number;
 };
 
-export type ExportMyData200 = { [key: string]: unknown };
-
 export type ListBiometricsParams = {
   metric?: string;
   source?: string;

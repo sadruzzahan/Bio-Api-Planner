@@ -31,7 +31,6 @@ import type {
   Dashboard,
   DeleteAccountBody,
   DeleteAccountResponse,
-  ExportMyData200,
   ForbiddenResponse,
   GetChatHistoryParams,
   GetStateHistoryParams,
@@ -408,16 +407,20 @@ export function useListAuditLog<
 }
 
 /**
- * @summary Download a JSON archive of all data owned by the current user
+ * Returns `application/zip` containing `manifest.json` plus one
+`<table>.json` per table the user owns (users, biometric_readings,
+sleep_sessions, glucose_readings, activity_sessions,
+biological_states, interventions, meals, supplements, chat_messages,
+integrations, consent_records, audit_log).
+
+ * @summary Download a ZIP archive containing one JSON file per table owned by the current user
  */
 export const getExportMyDataUrl = () => {
   return `/api/users/me/export`;
 };
 
-export const exportMyData = async (
-  options?: RequestInit,
-): Promise<ExportMyData200> => {
-  return customFetch<ExportMyData200>(getExportMyDataUrl(), {
+export const exportMyData = async (options?: RequestInit): Promise<Blob> => {
+  return customFetch<Blob>(getExportMyDataUrl(), {
     ...options,
     method: "GET",
   });
@@ -461,7 +464,7 @@ export type ExportMyDataQueryError = ErrorType<
 >;
 
 /**
- * @summary Download a JSON archive of all data owned by the current user
+ * @summary Download a ZIP archive containing one JSON file per table owned by the current user
  */
 
 export function useExportMyData<
