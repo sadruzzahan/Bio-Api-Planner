@@ -15,9 +15,11 @@ import { z } from "zod/v4";
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
+  clerkId: text("clerk_id").unique(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
-  tier: text("tier").notNull().default("optimize"),
+  role: text("role").notNull().default("user"),
+  tier: text("tier").notNull().default("basic"),
   chronotype: text("chronotype").notNull().default("intermediate"),
   primaryGoal: text("primary_goal").notNull().default("performance"),
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),

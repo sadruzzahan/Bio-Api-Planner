@@ -6,12 +6,11 @@ import {
   UpdateCurrentUserBody,
   UpdateCurrentUserResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
 
 router.get("/users/me", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
     res.status(404).json({ error: "User not found" });
@@ -21,15 +20,22 @@ router.get("/users/me", async (req, res): Promise<void> => {
 });
 
 router.patch("/users/me", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const parsed = UpdateCurrentUserBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  const { onboardedAt, ...rest } = parsed.data;
+  const updates: Record<string, unknown> = { ...rest };
+  if (onboardedAt !== undefined) {
+    updates.onboardedAt = onboardedAt === null ? null : new Date(onboardedAt);
+  }
+
   const [user] = await db
     .update(usersTable)
-    .set(parsed.data)
+    .set(updates)
     .where(eq(usersTable.id, userId))
     .returning();
   if (!user) {

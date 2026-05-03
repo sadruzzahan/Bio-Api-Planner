@@ -13,12 +13,11 @@ import {
 import { GetDashboardResponse } from "@workspace/api-zod";
 import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
-import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
 
 router.get("/dashboard", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const h24 = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));

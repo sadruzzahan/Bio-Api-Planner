@@ -58,6 +58,10 @@ async function seed() {
       chronotype: "intermediate",
       primaryGoal: "performance",
       onboardedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+      // Sentinel value so this seed account is never matched by a real Clerk
+      // user (Clerk IDs always start with "user_"). Useful for local dev /
+      // demos and lets us inspect or reseed without colliding with auth.
+      clerkId: "__demo_seed__",
     })
     .returning();
   const userId = user!.id;

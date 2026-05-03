@@ -7,13 +7,12 @@ import {
   CreateBiometricBody,
   GetBiometricsSummaryResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
 
 const router: IRouter = Router();
 
 router.get("/biometrics", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = ListBiometricsQueryParams.safeParse(
     coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
   );
@@ -38,7 +37,7 @@ router.get("/biometrics", async (req, res): Promise<void> => {
 });
 
 router.post("/biometrics", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const parsed = CreateBiometricBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -52,7 +51,7 @@ router.post("/biometrics", async (req, res): Promise<void> => {
 });
 
 router.get("/biometrics/summary", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const now = new Date();
   const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

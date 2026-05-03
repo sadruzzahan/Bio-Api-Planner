@@ -10,6 +10,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  role: string;
   tier: string;
   chronotype: string;
   primaryGoal: string;

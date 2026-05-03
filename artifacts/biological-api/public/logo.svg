@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 32" fill="none">
+  <g fill="hsl(174 100% 42%)">
+    <path d="M4 22 L10 22 L13 8 L16 26 L19 14 L22 22 L28 22" stroke="hsl(174 100% 42%)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  <text x="36" y="22" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-weight="700" font-size="16" letter-spacing="3" fill="hsl(174 100% 42%)">BioOS</text>
+</svg>

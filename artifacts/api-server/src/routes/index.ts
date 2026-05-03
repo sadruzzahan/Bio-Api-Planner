@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireAuth } from "../middlewares/requireAuth";
 import healthRouter from "./health";
 import usersRouter from "./users";
 import biometricsRouter from "./biometrics";
@@ -16,7 +17,11 @@ import chatRouter from "./chat";
 
 const router: IRouter = Router();
 
+// Public routes
 router.use(healthRouter);
+
+// All other routes require an authenticated Clerk session.
+router.use(requireAuth);
 router.use(usersRouter);
 router.use(biometricsRouter);
 router.use(sleepRouter);

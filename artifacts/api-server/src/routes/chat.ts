@@ -12,7 +12,6 @@ import {
   GetChatHistoryQueryParams,
   GetChatHistoryResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
 
@@ -28,7 +27,7 @@ Your role:
 You are NOT a general wellness chatbot. You are a precision optimization engine with access to real biological data.`;
 
 router.post("/chat", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const body = SendChatMessageBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
@@ -132,7 +131,7 @@ router.post("/chat", async (req, res): Promise<void> => {
 });
 
 router.get("/chat/history", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = GetChatHistoryQueryParams.safeParse(req.query);
   if (!q.success) {
     res.status(400).json({ error: q.error.message });

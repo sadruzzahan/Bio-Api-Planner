@@ -6,14 +6,13 @@ import {
   ListMealsResponse,
   CreateMealBody,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/meals", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = ListMealsQueryParams.safeParse(
     coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
   );
@@ -36,7 +35,7 @@ router.get("/meals", async (req, res): Promise<void> => {
 });
 
 router.post("/meals", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const parsed = CreateMealBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });

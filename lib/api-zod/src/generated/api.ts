@@ -21,6 +21,7 @@ export const GetCurrentUserResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
+  role: zod.string(),
   tier: zod.string(),
   chronotype: zod.string(),
   primaryGoal: zod.string(),
@@ -33,15 +34,16 @@ export const GetCurrentUserResponse = zod.object({
  */
 export const UpdateCurrentUserBody = zod.object({
   name: zod.string().optional(),
-  tier: zod.string().optional(),
   chronotype: zod.string().optional(),
   primaryGoal: zod.string().optional(),
+  onboardedAt: zod.coerce.date().nullish(),
 });
 
 export const UpdateCurrentUserResponse = zod.object({
   id: zod.number(),
   email: zod.string(),
   name: zod.string(),
+  role: zod.string(),
   tier: zod.string(),
   chronotype: zod.string(),
   primaryGoal: zod.string(),
@@ -446,6 +448,7 @@ export const GetDashboardResponse = zod.object({
     id: zod.number(),
     email: zod.string(),
     name: zod.string(),
+    role: zod.string(),
     tier: zod.string(),
     chronotype: zod.string(),
     primaryGoal: zod.string(),

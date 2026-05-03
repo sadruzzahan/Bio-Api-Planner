@@ -8,12 +8,11 @@ import {
   DisconnectIntegrationParams,
   DisconnectIntegrationResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 
 const router: IRouter = Router();
 
 router.get("/integrations", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const rows = await db
     .select()
     .from(integrationsTable)
@@ -22,7 +21,7 @@ router.get("/integrations", async (req, res): Promise<void> => {
 });
 
 router.post("/integrations/:provider/connect", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const params = ConnectIntegrationParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -58,7 +57,7 @@ router.post("/integrations/:provider/connect", async (req, res): Promise<void> =
 });
 
 router.delete("/integrations/:provider", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const params = DisconnectIntegrationParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

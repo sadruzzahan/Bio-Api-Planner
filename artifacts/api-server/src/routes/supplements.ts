@@ -9,13 +9,12 @@ import {
   UpdateSupplementResponse,
   DeleteSupplementParams,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/supplements", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const { limit, offset } = parsePagination(req.query as Record<string, unknown>);
   const rows = await db
     .select()
@@ -27,7 +26,7 @@ router.get("/supplements", async (req, res): Promise<void> => {
 });
 
 router.post("/supplements", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const parsed = CreateSupplementBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -41,7 +40,7 @@ router.post("/supplements", async (req, res): Promise<void> => {
 });
 
 router.patch("/supplements/:id", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const params = UpdateSupplementParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });
@@ -65,7 +64,7 @@ router.patch("/supplements/:id", async (req, res): Promise<void> => {
 });
 
 router.delete("/supplements/:id", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const params = DeleteSupplementParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

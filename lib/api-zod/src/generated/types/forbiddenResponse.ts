@@ -5,10 +5,9 @@
  * Biological API — programmable optimization interface for human biology
  * OpenAPI spec version: 0.1.0
  */
+import type { ErrorBody } from "./errorBody";
 
-export interface UpdateUserBody {
-  name?: string;
-  chronotype?: string;
-  primaryGoal?: string;
-  onboardedAt?: Date | null;
-}
+/**
+ * Authenticated user is not allowed to perform this action
+ */
+export type ForbiddenResponse = ErrorBody;

@@ -7,6 +7,8 @@ info:
 servers:
   - url: /api
     description: Base API path
+security:
+  - ClerkSession: []
 tags:
   - name: health
   - name: users
@@ -29,6 +31,7 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
+      security: []
       responses:
         "200":
           description: Healthy
@@ -528,7 +531,31 @@ paths:
                   $ref: "#/components/schemas/ChatMessage"
 
 components:
+  securitySchemes:
+    ClerkSession:
+      type: apiKey
+      in: cookie
+      name: __session
+      description: Clerk session cookie set by the Clerk frontend SDK after sign-in.
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
+    Forbidden:
+      description: Authenticated user is not allowed to perform this action
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorBody"
   schemas:
+    ErrorBody:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
     HealthStatus:
       type: object
       properties:
@@ -541,20 +568,21 @@ components:
         id: { type: integer }
         email: { type: string }
         name: { type: string }
+        role: { type: string }
         tier: { type: string }
         chronotype: { type: string }
         primaryGoal: { type: string }
         onboardedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time }
-      required: [id, email, name, tier, chronotype, primaryGoal, createdAt]
+      required: [id, email, name, role, tier, chronotype, primaryGoal, createdAt]
 
     UpdateUserBody:
       type: object
       properties:
         name: { type: string }
-        tier: { type: string }
         chronotype: { type: string }
         primaryGoal: { type: string }
+        onboardedAt: { type: string, format: date-time, nullable: true }
 
     BiometricReading:
       type: object

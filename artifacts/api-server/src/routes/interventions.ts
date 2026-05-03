@@ -8,13 +8,12 @@ import {
   UpdateInterventionBody,
   UpdateInterventionResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/interventions", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = ListInterventionsQueryParams.safeParse(req.query);
   if (!q.success) {
     res.status(400).json({ error: q.error.message });
@@ -34,7 +33,7 @@ router.get("/interventions", async (req, res): Promise<void> => {
 });
 
 router.patch("/interventions/:id", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const params = UpdateInterventionParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

@@ -5,6 +5,10 @@
  * Biological API — programmable optimization interface for human biology
  * OpenAPI spec version: 0.1.0
  */
+export interface ErrorBody {
+  error: string;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -13,6 +17,7 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  role: string;
   tier: string;
   chronotype: string;
   primaryGoal: string;
@@ -22,9 +27,9 @@ export interface User {
 
 export interface UpdateUserBody {
   name?: string;
-  tier?: string;
   chronotype?: string;
   primaryGoal?: string;
+  onboardedAt?: string | null;
 }
 
 export interface BiometricReading {
@@ -266,6 +271,16 @@ export interface ChatResponse {
   userMessage: ChatMessage;
   assistantMessage: ChatMessage;
 }
+
+/**
+ * Missing or invalid authentication
+ */
+export type UnauthorizedResponse = ErrorBody;
+
+/**
+ * Authenticated user is not allowed to perform this action
+ */
+export type ForbiddenResponse = ErrorBody;
 
 export type ListBiometricsParams = {
   metric?: string;

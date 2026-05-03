@@ -6,9 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UpdateUserBody {
-  name?: string;
-  chronotype?: string;
-  primaryGoal?: string;
-  onboardedAt?: Date | null;
+export interface ErrorBody {
+  error: string;
 }

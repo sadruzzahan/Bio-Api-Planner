@@ -8,21 +8,20 @@ import {
 } from "@workspace/api-zod";
 import { classifyBiologicalState } from "../lib/state-classifier";
 import { planInterventions } from "../lib/intervention-planner";
-import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/state/current", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const state = await classifyBiologicalState(userId);
   await planInterventions(userId, state);
   res.json(GetCurrentStateResponse.parse(state));
 });
 
 router.get("/state/history", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = GetStateHistoryQueryParams.safeParse(
     coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
   );

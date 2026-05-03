@@ -2,14 +2,13 @@ import { Router, type IRouter } from "express";
 import { and, eq, gte, lte, desc } from "drizzle-orm";
 import { db, activitySessionsTable } from "@workspace/db";
 import { ListActivityQueryParams, ListActivityResponse } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/activity", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = ListActivityQueryParams.safeParse(
     coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
   );

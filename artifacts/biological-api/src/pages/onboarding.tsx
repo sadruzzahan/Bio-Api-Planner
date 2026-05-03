@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useUpdateCurrentUser,
+  useGetCurrentUser,
+  getGetCurrentUserQueryKey,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Activity, Target, Wifi, Clock, Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 const WEARABLES = [
   { id: "whoop", label: "WHOOP" },
@@ -23,15 +30,37 @@ const CHRONOTYPES = [
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  const { data: user } = useGetCurrentUser();
+  const updateUser = useUpdateCurrentUser();
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState("");
   const [wearable, setWearable] = useState("");
   const [chronotype, setChronotype] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleFinish = () => {
+  // If the user has already onboarded, skip straight to the dashboard.
+  useEffect(() => {
+    if (user?.onboardedAt) navigate("/dashboard", { replace: true });
+  }, [user?.onboardedAt, navigate]);
+
+  const handleFinish = async () => {
     setLoading(true);
-    setTimeout(() => navigate("/dashboard"), 2500);
+    try {
+      await updateUser.mutateAsync({
+        data: {
+          chronotype,
+          primaryGoal: goal,
+          onboardedAt: new Date().toISOString(),
+        },
+      });
+      await queryClient.invalidateQueries({ queryKey: getGetCurrentUserQueryKey() });
+      // Brief delay for the "running assessment" animation
+      setTimeout(() => navigate("/dashboard"), 1500);
+    } catch (err) {
+      setLoading(false);
+      toast.error("Couldn't save your profile. Please try again.");
+    }
   };
 
   const steps = [

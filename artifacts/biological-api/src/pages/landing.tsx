@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Activity, Brain, ShieldAlert, Zap, Cpu, Database, ArrowRight, Check } from "lucide-react";
-import { useGetCurrentUser } from "@workspace/api-client-react";
 import { motion } from "framer-motion";
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const TIERS = [
   {
@@ -62,8 +63,6 @@ const LAYERS = [
 ];
 
 export default function Landing() {
-  const { data: user, isLoading } = useGetCurrentUser();
-
   return (
     <div className="min-h-[100dvh] bg-background text-foreground flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
@@ -75,19 +74,16 @@ export default function Landing() {
         </div>
         <nav className="flex items-center gap-6">
           <a href="#pricing" className="text-sm font-mono text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-          {isLoading ? null : user ? (
-            <Link href="/dashboard">
-              <Button size="sm" variant="outline" className="font-mono uppercase tracking-wider border-primary/30 text-primary hover:bg-primary/10" data-testid="link-dashboard">
-                Mission Control
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/onboarding">
-              <Button size="sm" className="font-mono uppercase tracking-wider" data-testid="link-onboarding">
-                Initialize
-              </Button>
-            </Link>
-          )}
+          <Link href="/sign-in">
+            <Button size="sm" variant="ghost" className="font-mono uppercase tracking-wider text-muted-foreground hover:text-foreground" data-testid="link-signin">
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/sign-up">
+            <Button size="sm" className="font-mono uppercase tracking-wider" data-testid="link-signup">
+              Get Started
+            </Button>
+          </Link>
         </nav>
       </header>
 
@@ -119,7 +115,7 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href={user ? "/dashboard" : "/onboarding"}>
+              <Link href="/sign-up">
                 <Button
                   size="lg"
                   className="font-mono uppercase tracking-wider h-14 px-8 rounded-none border border-primary bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 group"
@@ -127,6 +123,16 @@ export default function Landing() {
                 >
                   Initialize System
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link href="/sign-in">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="font-mono uppercase tracking-wider h-14 px-8 rounded-none border border-border text-muted-foreground hover:text-foreground"
+                  data-testid="btn-signin-hero"
+                >
+                  Sign In
                 </Button>
               </Link>
             </div>
@@ -225,7 +231,7 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-                <Link href={user ? "/dashboard" : "/onboarding"}>
+                <Link href="/sign-up">
                   <Button
                     variant={tier.highlighted ? "default" : "outline"}
                     className={`w-full font-mono uppercase tracking-wider ${tier.highlighted ? "" : "border-border"}`}

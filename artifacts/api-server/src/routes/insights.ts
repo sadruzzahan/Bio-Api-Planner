@@ -9,7 +9,6 @@ import {
   biologicalStatesTable,
 } from "@workspace/db";
 import { GetInsightsResponse } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
@@ -118,7 +117,7 @@ Context: ${context}`,
 }
 
 router.get("/insights", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const insights = await generateInsightCards(userId);
   res.json(GetInsightsResponse.parse(insights));
 });

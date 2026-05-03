@@ -6,14 +6,13 @@ import {
   ListGlucoseResponse,
   GetGlucoseTrendResponse,
 } from "@workspace/api-zod";
-import { getDemoUserId } from "../lib/demo-user";
 import { coerceDateFields } from "../lib/query-dates";
 import { parsePagination } from "../lib/pagination";
 
 const router: IRouter = Router();
 
 router.get("/glucose", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const q = ListGlucoseQueryParams.safeParse(
     coerceDateFields(req.query as Record<string, unknown>, ["from", "to"]),
   );
@@ -38,7 +37,7 @@ router.get("/glucose", async (req, res): Promise<void> => {
 });
 
 router.get("/glucose/trend", async (req, res): Promise<void> => {
-  const userId = await getDemoUserId();
+  const userId = req.userId!;
   const d30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const rows = await db
     .select()
