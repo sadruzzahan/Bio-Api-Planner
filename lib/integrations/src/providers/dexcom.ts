@@ -76,7 +76,14 @@ export const dexcomAdapter: ProviderAdapter = {
   // Dexcom updates EGVs every 5 minutes; poll at 15 min to stay well under
   // their per-minute quota while keeping dashboards fresh.
   syncIntervalMs: 15 * 60 * 1000,
-  sandbox: true, // flipped via DEXCOM_SANDBOX=false once partner-approved
+  // Resolved at request time so flipping DEXCOM_SANDBOX (or moving from
+  // sandbox to partner-approved prod credentials) takes effect without
+  // a server restart and is reported accurately on the integrations UI.
+  get sandbox(): boolean {
+    const v = process.env.DEXCOM_SANDBOX;
+    if (v === "false" || v === "0") return false;
+    return true;
+  },
   scopes: SCOPES,
   supportsWebhooks: true,
 

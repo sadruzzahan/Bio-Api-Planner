@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GlobalReauthBanner } from "@/components/global-reauth-banner";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location, navigate] = useLocation();
@@ -189,8 +190,9 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
-          {children}
+        <div className="flex-1 overflow-y-auto">
+          <GlobalReauthBanner />
+          <div className="p-4 md:p-8">{children}</div>
         </div>
 
         <nav className="md:hidden flex items-center justify-around border-t border-border bg-card py-2 shrink-0">

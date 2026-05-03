@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, AlertTriangle, Brain, Check, Loader2, Shield, Target, X, Zap } from "lucide-react";
 import { Layout } from "@/components/layout";
+import { DataSourcesPanel } from "@/components/data-sources-panel";
 import { toast } from "sonner";
 
 export default function Dashboard() {
@@ -238,6 +239,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <DataSourcesPanel />
       </motion.div>
     </AnimatePresence>
     </Layout>
