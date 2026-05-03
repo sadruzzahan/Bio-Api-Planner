@@ -40,4 +40,3 @@ channel = "stable-25_05"
 VITE_CLERK_PUBLISHABLE_KEY = "pk_test_YnJpZWYtdGFkcG9sZS00Mi5jbGVyay5hY2NvdW50cy5kZXYk"
 
 [userenv.development]
-APP_ENCRYPTION_KEY = "jRsgujsCDUvOicO2R5UobhsbvjF2CDje04HC1XZAm7E="

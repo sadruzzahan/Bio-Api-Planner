@@ -144,9 +144,15 @@ export function PostSigninConsentModal({ children }: { children: React.ReactNode
   const active = missingDocs.find((d) => d.doc === activeDoc) ?? missingDocs[0]!;
   const ActiveIcon = active.icon;
 
+  // FAIL CLOSED: render only the modal (no children) so the underlying app
+  // shell never mounts before consent is recorded. Mounting children here
+  // would let queries/effects fire and trigger writes (state classification,
+  // intervention planning, etc.) before legal acceptance.
   return (
-    <>
-      {children}
+    <div
+      className="fixed inset-0 z-[60] bg-background"
+      data-testid="consent-gate"
+    >
       <Dialog open modal>
         <DialogContent
           className="max-w-2xl max-h-[90vh] flex flex-col gap-0 p-0 [&>button.absolute]:hidden"
@@ -262,6 +268,6 @@ export function PostSigninConsentModal({ children }: { children: React.ReactNode
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
