@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Layout } from "@/components/layout";
-import { useListActivity } from "@workspace/api-client-react";
+import { useListActivity, useGetCurrentState } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { motion } from "framer-motion";
-import { Zap, Activity as ActivityIcon, Timer, Flame, MapPin } from "lucide-react";
+import { Zap, Activity as ActivityIcon, Timer, Flame, Brain, TrendingUp, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -12,16 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function Activity() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  
+
   const { data: activities, isLoading } = useListActivity();
+  const { data: state } = useGetCurrentState();
 
   const filteredActivities = activities?.filter(a => typeFilter === "all" || a.type === typeFilter);
 
   const getIntensityColor = (intensity: string) => {
-    switch(intensity.toLowerCase()) {
-      case 'high': return "text-red-500 bg-red-500/10 border-red-500/20";
-      case 'moderate': return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
-      case 'low': return "text-green-500 bg-green-500/10 border-green-500/20";
+    switch (intensity.toLowerCase()) {
+      case "high": return "text-red-500 bg-red-500/10 border-red-500/20";
+      case "moderate": return "text-yellow-500 bg-yellow-500/10 border-yellow-500/20";
+      case "low": return "text-green-500 bg-green-500/10 border-green-500/20";
       default: return "text-primary bg-primary/10 border-primary/20";
     }
   };
@@ -31,37 +32,90 @@ export default function Activity() {
     totalHours: +(activities.reduce((sum, a) => sum + a.durationMinutes, 0) / 60).toFixed(1),
     totalCalories: activities.reduce((sum, a) => sum + (a.calories || 0), 0),
     lowRatio: activities.length > 0
-      ? Math.round(activities.filter(a => a.intensity?.toLowerCase() === 'low').length / activities.length * 100)
+      ? Math.round(activities.filter(a => a.intensity?.toLowerCase() === "low").length / activities.length * 100)
       : 0,
   } : null;
 
   const chartData = (() => {
     if (!activities) return [];
     const dayMap: Record<string, { name: string; duration: number; strain: number }> = {};
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     days.forEach(d => { dayMap[d] = { name: d, duration: 0, strain: 0 }; });
     activities.forEach(a => {
       const dow = days[new Date(a.recordedAt).getDay()];
       dayMap[dow].duration += a.durationMinutes;
       dayMap[dow].strain += a.strainScore || 0;
     });
-    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => dayMap[d]);
+    return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => dayMap[d]);
+  })();
+
+  const prescription = (() => {
+    if (!state) return null;
+    const score = state.readinessScore;
+    const recovery = state.recoveryState?.toLowerCase();
+    if (score >= 80 && (recovery === "high" || recovery === "optimal" || recovery === "good")) {
+      return {
+        type: "high_output",
+        title: "High-Output Session Recommended",
+        detail: `Readiness at ${score}% with ${recovery} recovery. Your CNS is primed — push a quality strength or interval session today.`,
+        color: "text-green-400 border-green-400/30 bg-green-400/5",
+        icon: TrendingUp,
+      };
+    }
+    if (score >= 60) {
+      return {
+        type: "moderate",
+        title: "Aerobic / Zone 2 Session",
+        detail: `Readiness at ${score}%. Moderate recovery state detected. A Zone 2 aerobic session (45–60 min at low HR) will build base without adding CNS debt.`,
+        color: "text-yellow-400 border-yellow-400/30 bg-yellow-400/5",
+        icon: ActivityIcon,
+      };
+    }
+    return {
+      type: "rest",
+      title: "Active Recovery Day",
+      detail: `Readiness at ${score}%. System under stress — prioritize mobility, breath work, or a slow 20-minute walk. Hard training today risks compounding fatigue.`,
+      color: "text-orange-400 border-orange-400/30 bg-orange-400/5",
+      icon: TrendingDown,
+    };
   })();
 
   return (
     <Layout>
-      <motion.div 
+      <motion.div
         className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold font-mono tracking-tight uppercase" data-testid="text-page-title">System Strain</h1>
-            <p className="text-muted-foreground font-mono" data-testid="text-page-subtitle">Physical output and cardiovascular load</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold font-mono tracking-tight uppercase" data-testid="text-page-title">System Strain</h1>
+          <p className="text-muted-foreground font-mono" data-testid="text-page-subtitle">Physical output and cardiovascular load</p>
         </div>
+
+        {/* AI Exercise Prescription Card */}
+        {prescription ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className={`border ${prescription.color}`} data-testid="card-prescription">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-primary" />
+                  <CardDescription className="font-mono uppercase tracking-wider text-xs">Today's Prescription</CardDescription>
+                </div>
+                <CardTitle className="font-mono text-lg">{prescription.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-mono text-sm text-muted-foreground">{prescription.detail}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : (
+          <Skeleton className="h-28 w-full" />
+        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -123,25 +177,14 @@ export default function Activity() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis 
-                      dataKey="name" 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12} 
-                      tickLine={false}
-                      axisLine={false}
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px" }}
+                      itemStyle={{ color: "hsl(var(--foreground))" }}
+                      formatter={(v: number, name: string) => name === "duration" ? [`${v} min`, "Duration"] : [v, "Strain"]}
                     />
-                    <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                      itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(v: number, name: string) => name === 'duration' ? [`${v} min`, 'Duration'] : [v, 'Strain']}
-                    />
-                    <Legend wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }} />
+                    <Legend wrapperStyle={{ fontSize: "12px", fontFamily: "var(--font-mono)" }} />
                     <Bar dataKey="duration" fill="hsl(var(--primary))" name="Duration (min)" radius={[4, 4, 0, 0]} opacity={0.85} />
                     <Bar dataKey="strain" fill="hsl(188 60% 35%)" name="Strain" radius={[4, 4, 0, 0]} opacity={0.6} />
                   </BarChart>
@@ -197,7 +240,6 @@ export default function Activity() {
                         </div>
                       </div>
                     </div>
-                    
                     <div className="flex flex-wrap gap-4 sm:gap-8 w-full sm:w-auto">
                       <div className="space-y-1">
                         <div className="text-xs text-muted-foreground font-mono uppercase">Duration</div>
@@ -206,7 +248,6 @@ export default function Activity() {
                           {activity.durationMinutes} min
                         </div>
                       </div>
-                      
                       {activity.calories && (
                         <div className="space-y-1">
                           <div className="text-xs text-muted-foreground font-mono uppercase">Energy</div>
@@ -216,7 +257,6 @@ export default function Activity() {
                           </div>
                         </div>
                       )}
-                      
                       {activity.avgHeartRate && (
                         <div className="space-y-1">
                           <div className="text-xs text-muted-foreground font-mono uppercase">Avg HR</div>
@@ -226,11 +266,10 @@ export default function Activity() {
                           </div>
                         </div>
                       )}
-
                       <div className="space-y-1 flex items-center h-full">
-                         <Badge variant="outline" className={`font-mono text-xs uppercase ${getIntensityColor(activity.intensity)}`}>
-                            {activity.intensity} Load
-                         </Badge>
+                        <Badge variant="outline" className={`font-mono text-xs uppercase ${getIntensityColor(activity.intensity)}`}>
+                          {activity.intensity} Load
+                        </Badge>
                       </div>
                     </div>
                   </CardContent>
@@ -238,9 +277,7 @@ export default function Activity() {
               ))
             ) : (
               <Card className="bg-card/50 border-border p-8 text-center">
-                <div className="text-muted-foreground font-mono text-sm">
-                  No activity sessions found
-                </div>
+                <div className="text-muted-foreground font-mono text-sm">No activity sessions found</div>
               </Card>
             )}
           </div>

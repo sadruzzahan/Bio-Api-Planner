@@ -121,19 +121,19 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="md:hidden flex items-center justify-around border-t border-border bg-card py-2 shrink-0">
-          {navItems.slice(0, 5).map((item) => {
+          {[...navItems, { name: "Profile", href: "/profile", icon: Settings }].map((item) => {
             const isActive = location === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center gap-1 p-1 text-[10px] font-mono transition-colors ${
+                className={`flex flex-col items-center gap-1 p-1 text-[10px] font-mono transition-colors min-w-0 ${
                   isActive ? "text-primary" : "text-muted-foreground"
                 }`}
-                data-testid={`mob-nav-${item.name.toLowerCase()}`}
+                data-testid={`mob-nav-${item.name.toLowerCase().replace(/ /g, "-")}`}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="uppercase tracking-wider">{item.name}</span>
+                <item.icon className="w-4 h-4 shrink-0" />
+                <span className="uppercase tracking-wider truncate max-w-[48px] text-center">{item.name}</span>
               </Link>
             );
           })}
