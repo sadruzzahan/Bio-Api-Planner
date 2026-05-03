@@ -7,9 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Beaker, Sunrise, Sunset, Utensils, Info } from "lucide-react";
 import { motion } from "framer-motion";
 
+type FilterTab = "all" | "active" | "inactive";
+const FILTER_TABS: FilterTab[] = ["all", "active", "inactive"];
+
 export default function Supplements() {
   const { data: supplements, isLoading } = useListSupplements();
-  const [filter, setFilter] = useState<"all" | "active" | "inactive">("active");
+  const [filter, setFilter] = useState<FilterTab>("active");
+
+  const handleFilterChange = (v: string) => {
+    if (FILTER_TABS.includes(v as FilterTab)) setFilter(v as FilterTab);
+  };
 
   const filteredSupplements = supplements?.filter((s) => {
     if (filter === "all") return true;
@@ -50,7 +57,7 @@ export default function Supplements() {
             <p className="text-muted-foreground font-mono text-sm">Active supplementation and compound intake schedule.</p>
           </div>
           
-          <Tabs defaultValue="active" onValueChange={(v) => setFilter(v as any)} className="w-full md:w-auto">
+          <Tabs defaultValue="active" onValueChange={handleFilterChange} className="w-full md:w-auto">
             <TabsList className="font-mono bg-card border border-border">
               <TabsTrigger value="active" data-testid="tab-active">Active</TabsTrigger>
               <TabsTrigger value="inactive" data-testid="tab-inactive">Archived</TabsTrigger>

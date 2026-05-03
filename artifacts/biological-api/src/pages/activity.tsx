@@ -26,16 +26,27 @@ export default function Activity() {
     }
   };
 
-  // Mock data for the stacked bar chart since API doesn't return zone breakdown directly in standard list
-  const chartData = [
-    { name: 'Mon', zone1: 20, zone2: 40, zone3: 10, zone4: 0, zone5: 0 },
-    { name: 'Tue', zone1: 15, zone2: 45, zone3: 20, zone4: 5, zone5: 0 },
-    { name: 'Wed', zone1: 10, zone2: 30, zone3: 0, zone4: 0, zone5: 0 },
-    { name: 'Thu', zone1: 25, zone2: 50, zone3: 15, zone4: 10, zone5: 2 },
-    { name: 'Fri', zone1: 0, zone2: 0, zone3: 0, zone4: 0, zone5: 0 },
-    { name: 'Sat', zone1: 30, zone2: 60, zone3: 30, zone4: 15, zone5: 5 },
-    { name: 'Sun', zone1: 40, zone2: 90, zone3: 10, zone4: 0, zone5: 0 },
-  ];
+  const weeklyStats = activities ? {
+    totalStrain: Math.round(activities.reduce((sum, a) => sum + (a.strainScore || 0), 0)),
+    totalHours: +(activities.reduce((sum, a) => sum + a.durationMinutes, 0) / 60).toFixed(1),
+    totalCalories: activities.reduce((sum, a) => sum + (a.calories || 0), 0),
+    lowRatio: activities.length > 0
+      ? Math.round(activities.filter(a => a.intensity?.toLowerCase() === 'low').length / activities.length * 100)
+      : 0,
+  } : null;
+
+  const chartData = (() => {
+    if (!activities) return [];
+    const dayMap: Record<string, { name: string; duration: number; strain: number }> = {};
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    days.forEach(d => { dayMap[d] = { name: d, duration: 0, strain: 0 }; });
+    activities.forEach(a => {
+      const dow = days[new Date(a.recordedAt).getDay()];
+      dayMap[dow].duration += a.durationMinutes;
+      dayMap[dow].strain += a.strainScore || 0;
+    });
+    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => dayMap[d]);
+  })();
 
   return (
     <Layout>
@@ -56,10 +67,11 @@ export default function Activity() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="bg-card/50 border-border" data-testid="card-stat-load">
             <CardHeader className="pb-2">
-              <CardDescription className="font-mono uppercase tracking-wider text-xs">Weekly Load</CardDescription>
+              <CardDescription className="font-mono uppercase tracking-wider text-xs">Total Strain</CardDescription>
               <CardTitle className="text-3xl font-mono flex items-baseline gap-2">
-                <span>450</span>
-                <span className="text-sm text-muted-foreground font-sans">AU</span>
+                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                  <><span>{weeklyStats?.totalStrain ?? "--"}</span><span className="text-sm text-muted-foreground font-sans">AU</span></>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -67,8 +79,9 @@ export default function Activity() {
             <CardHeader className="pb-2">
               <CardDescription className="font-mono uppercase tracking-wider text-xs">Total Time</CardDescription>
               <CardTitle className="text-3xl font-mono flex items-baseline gap-2">
-                <span>6.5</span>
-                <span className="text-sm text-muted-foreground font-sans">hrs</span>
+                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                  <><span>{weeklyStats?.totalHours ?? "--"}</span><span className="text-sm text-muted-foreground font-sans">hrs</span></>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -76,17 +89,19 @@ export default function Activity() {
             <CardHeader className="pb-2">
               <CardDescription className="font-mono uppercase tracking-wider text-xs">Energy Expended</CardDescription>
               <CardTitle className="text-3xl font-mono flex items-baseline gap-2">
-                <span>3,450</span>
-                <span className="text-sm text-muted-foreground font-sans">kcal</span>
+                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                  <><span>{weeklyStats?.totalCalories.toLocaleString() ?? "--"}</span><span className="text-sm text-muted-foreground font-sans">kcal</span></>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
           <Card className="bg-card/50 border-border" data-testid="card-stat-zones">
             <CardHeader className="pb-2">
-              <CardDescription className="font-mono uppercase tracking-wider text-xs">Zone 2 Ratio</CardDescription>
+              <CardDescription className="font-mono uppercase tracking-wider text-xs">Low Intensity Ratio</CardDescription>
               <CardTitle className="text-3xl font-mono flex items-baseline gap-2">
-                <span>72</span>
-                <span className="text-sm text-muted-foreground font-sans">%</span>
+                {isLoading ? <Skeleton className="h-8 w-16" /> : (
+                  <><span>{weeklyStats?.lowRatio ?? "--"}</span><span className="text-sm text-muted-foreground font-sans">%</span></>
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -97,39 +112,41 @@ export default function Activity() {
           <CardHeader>
             <CardTitle className="font-mono uppercase tracking-wider text-sm flex items-center gap-2">
               <ActivityIcon className="w-4 h-4 text-primary" />
-              Heart Rate Zones (Weekly)
+              Weekly Activity (Duration &amp; Strain)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12} 
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }} />
-                  <Bar dataKey="zone1" stackId="a" fill="hsl(var(--chart-1))" name="Zone 1" opacity={0.6} />
-                  <Bar dataKey="zone2" stackId="a" fill="hsl(var(--chart-2))" name="Zone 2" opacity={0.8} />
-                  <Bar dataKey="zone3" stackId="a" fill="hsl(var(--chart-3))" name="Zone 3" />
-                  <Bar dataKey="zone4" stackId="a" fill="hsl(var(--chart-4))" name="Zone 4" />
-                  <Bar dataKey="zone5" stackId="a" fill="hsl(var(--destructive))" name="Zone 5" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {isLoading ? (
+                <Skeleton className="h-full w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12} 
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      formatter={(v: number, name: string) => name === 'duration' ? [`${v} min`, 'Duration'] : [v, 'Strain']}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '12px', fontFamily: 'var(--font-mono)' }} />
+                    <Bar dataKey="duration" fill="hsl(var(--primary))" name="Duration (min)" radius={[4, 4, 0, 0]} opacity={0.85} />
+                    <Bar dataKey="strain" fill="hsl(188 60% 35%)" name="Strain" radius={[4, 4, 0, 0]} opacity={0.6} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -86,8 +86,8 @@ export default function Interventions() {
             <SelectContent>
               <SelectItem value="all">All Protocols</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="skipped">Skipped</SelectItem>
+              <SelectItem value="executed">Executed</SelectItem>
+              <SelectItem value="dismissed">Dismissed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -170,23 +170,23 @@ export default function Interventions() {
                 {intervention.status === 'pending' && (
                   <CardFooter className="gap-3 pt-0">
                     <Button 
-                      onClick={() => handleUpdateStatus(intervention.id, 'completed')}
+                      onClick={() => handleUpdateStatus(intervention.id, 'executed')}
                       disabled={updateMutation.isPending}
                       className="font-mono text-xs uppercase tracking-wider"
-                      data-testid={`btn-complete-${intervention.id}`}
+                      data-testid={`btn-execute-${intervention.id}`}
                     >
                       <Check className="w-4 h-4 mr-2" />
                       Execute
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => handleUpdateStatus(intervention.id, 'skipped')}
+                      onClick={() => handleUpdateStatus(intervention.id, 'dismissed')}
                       disabled={updateMutation.isPending}
                       className="font-mono text-xs uppercase tracking-wider border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-                      data-testid={`btn-skip-${intervention.id}`}
+                      data-testid={`btn-dismiss-${intervention.id}`}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
-                      Override
+                      Dismiss
                     </Button>
                   </CardFooter>
                 )}
