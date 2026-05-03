@@ -140,7 +140,7 @@ export default function Glucose() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v) => format(new Date(v), "MMM d")} tickLine={false} axisLine={false} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={["dataMin - 10", "dataMax + 10"]} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[(dataMin: number) => Math.max(0, Math.floor((dataMin - 10) / 10) * 10), (dataMax: number) => Math.ceil((dataMax + 10) / 10) * 10]} allowDecimals={false} tickFormatter={(v: number) => Math.round(v).toString()} />
                         <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px" }} labelFormatter={(v) => format(new Date(v), "MMM d, yyyy")} />
                         <ReferenceLine y={140} stroke="hsl(var(--destructive))" strokeDasharray="3 3" strokeOpacity={0.5} />
                         <ReferenceLine y={70} stroke="hsl(var(--destructive))" strokeDasharray="3 3" strokeOpacity={0.5} />
@@ -171,7 +171,7 @@ export default function Glucose() {
                       <BarChart data={mealCorrelationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis dataKey="context" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[60, "dataMax + 20"]} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} domain={[60, (dataMax: number) => Math.ceil((dataMax + 20) / 10) * 10]} allowDecimals={false} tickFormatter={(v: number) => Math.round(v).toString()} />
                         <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", borderRadius: "8px" }} />
                         <ReferenceLine y={140} stroke="hsl(var(--destructive))" strokeDasharray="3 3" strokeOpacity={0.5} label={{ value: "High", fill: "hsl(var(--destructive))", fontSize: 10 }} />
                         <Bar dataKey="avg" fill="hsl(var(--primary))" name="Avg (mg/dL)" radius={[4, 4, 0, 0]} opacity={0.85} />

@@ -172,7 +172,7 @@ export default function Biometrics() {
                     <LineChart data={[...entriesData].reverse()}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="recordedAt" tickFormatter={v => format(parseISO(v), "MMM dd")} stroke="hsl(var(--muted-foreground))" fontSize={12} fontFamily="monospace" />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontFamily="monospace" />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} fontFamily="monospace" domain={[(dataMin: number) => Math.floor(dataMin), (dataMax: number) => Math.ceil(dataMax)]} tickFormatter={(v: number) => (Number.isFinite(v) ? (Math.abs(v) >= 100 ? Math.round(v).toString() : Number(v.toFixed(1)).toString()) : "")} />
                       <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--primary))", fontFamily: "monospace" }} labelFormatter={v => format(parseISO(v as string), "MMM dd, HH:mm")} />
                       <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: "hsl(var(--primary))", r: 4 }} activeDot={{ r: 6, fill: "hsl(var(--background))", stroke: "hsl(var(--primary))" }} />
                     </LineChart>
@@ -211,7 +211,7 @@ export default function Biometrics() {
                     <LineChart data={comparisonChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v: number) => (Number.isFinite(v) ? (Math.abs(v) >= 100 ? Math.round(v).toString() : Number(v.toFixed(1)).toString()) : "")} />
                       <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderColor: "hsl(var(--border))", fontFamily: "monospace", borderRadius: "8px" }} />
                       <Legend wrapperStyle={{ fontSize: "11px", fontFamily: "monospace" }} />
                       {COMPARE_METRICS.filter(m => compareMetrics.includes(m.key)).map(m => (
