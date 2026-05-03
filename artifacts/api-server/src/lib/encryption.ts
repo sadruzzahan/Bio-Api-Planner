@@ -9,7 +9,10 @@ function getKey(): Buffer {
   const raw = process.env.APP_ENCRYPTION_KEY;
   if (!raw) {
     throw new Error(
-      "APP_ENCRYPTION_KEY is not set. Refusing to start. Generate a key with `openssl rand -base64 32` and store as a secret.",
+      "APP_ENCRYPTION_KEY is not set. Refusing to start. Generate a key with " +
+        "`openssl rand -base64 32` and store as a Replit Secret (NOT an env var). " +
+        "Production deploys MUST source this from the secret manager — committing " +
+        "the key to .replit/git would defeat field-level encryption entirely.",
     );
   }
   // Accept either base64 or 64-char hex.

@@ -13,9 +13,15 @@ export interface HealthStatus {
   status: string;
 }
 
+/**
+ * The current user's profile. The user's email address is intentionally
+omitted — it is encrypted at rest and only ever returned via the
+privacy export. Clients should source the email from the auth
+provider (Clerk) instead.
+
+ */
 export interface User {
   id: number;
-  email: string;
   name: string;
   role: string;
   tier: string;

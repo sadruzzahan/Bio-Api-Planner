@@ -61,16 +61,16 @@ async function main() {
   // Insert one row into every cascade table using minimal-required values.
   // Raw SQL keeps the script independent of column-level schema drift —
   // we only ever care about the user_id linkage here.
-  await db.execute(sql`INSERT INTO biometric_readings (user_id, type, value, recorded_at) VALUES (${uid}, 'hrv', 50, now())`);
-  await db.execute(sql`INSERT INTO sleep_sessions (user_id, start_time, end_time) VALUES (${uid}, now() - interval '8 hours', now())`);
-  await db.execute(sql`INSERT INTO glucose_readings (user_id, value, recorded_at) VALUES (${uid}, 95, now())`);
-  await db.execute(sql`INSERT INTO activity_sessions (user_id, type, start_time, end_time) VALUES (${uid}, 'walk', now() - interval '30 minutes', now())`);
-  await db.execute(sql`INSERT INTO biological_states (user_id, energy_state, computed_at) VALUES (${uid}, 'optimal', now())`);
+  await db.execute(sql`INSERT INTO biometric_readings (user_id, source, metric, value, unit, recorded_at) VALUES (${uid}, 'test', 'hrv', 50, 'ms', now())`);
+  await db.execute(sql`INSERT INTO sleep_sessions (user_id, source, date, total_minutes, deep_minutes, rem_minutes, light_minutes, awake_minutes, efficiency_pct, onset_at, wake_at) VALUES (${uid}, 'test', current_date, 480, 90, 90, 270, 30, 90, now() - interval '8 hours', now())`);
+  await db.execute(sql`INSERT INTO glucose_readings (user_id, value_mgdl, recorded_at) VALUES (${uid}, 95, now())`);
+  await db.execute(sql`INSERT INTO activity_sessions (user_id, source, type, duration_minutes, intensity, strain_score, recorded_at) VALUES (${uid}, 'test', 'walk', 30, 'low', 5.0, now())`);
+  await db.execute(sql`INSERT INTO biological_states (user_id, energy_state, recovery_state, cognitive_state, stress_state, metabolic_state, readiness_score) VALUES (${uid}, 'optimal', 'recovered', 'sharp', 'calm', 'fed', 80)`);
   await db.execute(sql`INSERT INTO interventions (user_id, type, title, action, rationale, status) VALUES (${uid}, 'breath', 't', 'a', 'r', 'pending')`);
-  await db.execute(sql`INSERT INTO meals (user_id, name, eaten_at) VALUES (${uid}, 'snack', now())`);
-  await db.execute(sql`INSERT INTO supplements (user_id, name, dose, taken_at) VALUES (${uid}, 'mag', '300mg', now())`);
+  await db.execute(sql`INSERT INTO meals (user_id, logged_at, description, calories, carbs_g, protein_g, fat_g) VALUES (${uid}, now(), 'snack', 200, 20, 10, 5)`);
+  await db.execute(sql`INSERT INTO supplements (user_id, name, dose_mg, timing) VALUES (${uid}, 'mag', 300, 'evening')`);
   await db.execute(sql`INSERT INTO chat_messages (user_id, role, content) VALUES (${uid}, 'user', 'hi')`);
-  await db.execute(sql`INSERT INTO integrations (user_id, provider, status) VALUES (${uid}, 'whoop', 'connected')`);
+  await db.execute(sql`INSERT INTO integrations (user_id, provider, category, status) VALUES (${uid}, 'whoop', 'wearable', 'connected')`);
   await db.execute(sql`INSERT INTO consent_records (user_id, document, version, accepted) VALUES (${uid}, 'terms', 'v1.0', true)`);
   await db.execute(sql`INSERT INTO audit_log (user_id, actor_id, action, entity) VALUES (${uid}, ${uid}, 'create', 'test')`);
 

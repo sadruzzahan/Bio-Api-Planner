@@ -7,6 +7,7 @@ import {
   activitySessionsTable,
   biologicalStatesTable,
 } from "@workspace/db";
+import { recordAudit } from "./audit";
 
 type StateLevel = "optimal" | "good" | "moderate" | "low" | "critical";
 
@@ -143,6 +144,24 @@ export async function classifyBiologicalState(userId: number) {
     .insert(biologicalStatesTable)
     .values({ userId, energyState, recoveryState, cognitiveState, stressState, metabolicState, readinessScore, notes })
     .returning();
+
+  if (state) {
+    await recordAudit({
+      userId,
+      action: "create",
+      entity: "biological_state",
+      entityId: state.id,
+      metadata: {
+        energyState,
+        recoveryState,
+        cognitiveState,
+        stressState,
+        metabolicState,
+        readinessScore,
+        source: "auto_classify",
+      },
+    });
+  }
 
   return state!;
 }

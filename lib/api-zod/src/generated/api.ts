@@ -88,17 +88,20 @@ export const DeleteCurrentUserBody = zod.object({
 /**
  * @summary Get current user profile
  */
-export const GetCurrentUserResponse = zod.object({
-  id: zod.number(),
-  email: zod.string(),
-  name: zod.string(),
-  role: zod.string(),
-  tier: zod.string(),
-  chronotype: zod.string(),
-  primaryGoal: zod.string(),
-  onboardedAt: zod.coerce.date().nullish(),
-  createdAt: zod.coerce.date(),
-});
+export const GetCurrentUserResponse = zod
+  .object({
+    id: zod.number(),
+    name: zod.string(),
+    role: zod.string(),
+    tier: zod.string(),
+    chronotype: zod.string(),
+    primaryGoal: zod.string(),
+    onboardedAt: zod.coerce.date().nullish(),
+    createdAt: zod.coerce.date(),
+  })
+  .describe(
+    "The current user's profile. The user's email address is intentionally\nomitted — it is encrypted at rest and only ever returned via the\nprivacy export. Clients should source the email from the auth\nprovider (Clerk) instead.\n",
+  );
 
 /**
  * @summary Update current user profile
@@ -110,17 +113,20 @@ export const UpdateCurrentUserBody = zod.object({
   onboardedAt: zod.coerce.date().nullish(),
 });
 
-export const UpdateCurrentUserResponse = zod.object({
-  id: zod.number(),
-  email: zod.string(),
-  name: zod.string(),
-  role: zod.string(),
-  tier: zod.string(),
-  chronotype: zod.string(),
-  primaryGoal: zod.string(),
-  onboardedAt: zod.coerce.date().nullish(),
-  createdAt: zod.coerce.date(),
-});
+export const UpdateCurrentUserResponse = zod
+  .object({
+    id: zod.number(),
+    name: zod.string(),
+    role: zod.string(),
+    tier: zod.string(),
+    chronotype: zod.string(),
+    primaryGoal: zod.string(),
+    onboardedAt: zod.coerce.date().nullish(),
+    createdAt: zod.coerce.date(),
+  })
+  .describe(
+    "The current user's profile. The user's email address is intentionally\nomitted — it is encrypted at rest and only ever returned via the\nprivacy export. Clients should source the email from the auth\nprovider (Clerk) instead.\n",
+  );
 
 /**
  * @summary List biometric readings
@@ -515,17 +521,20 @@ export const DisconnectIntegrationResponse = zod.object({
  * @summary Composite dashboard payload
  */
 export const GetDashboardResponse = zod.object({
-  user: zod.object({
-    id: zod.number(),
-    email: zod.string(),
-    name: zod.string(),
-    role: zod.string(),
-    tier: zod.string(),
-    chronotype: zod.string(),
-    primaryGoal: zod.string(),
-    onboardedAt: zod.coerce.date().nullish(),
-    createdAt: zod.coerce.date(),
-  }),
+  user: zod
+    .object({
+      id: zod.number(),
+      name: zod.string(),
+      role: zod.string(),
+      tier: zod.string(),
+      chronotype: zod.string(),
+      primaryGoal: zod.string(),
+      onboardedAt: zod.coerce.date().nullish(),
+      createdAt: zod.coerce.date(),
+    })
+    .describe(
+      "The current user's profile. The user's email address is intentionally\nomitted — it is encrypted at rest and only ever returned via the\nprivacy export. Clients should source the email from the auth\nprovider (Clerk) instead.\n",
+    ),
   state: zod.object({
     id: zod.number(),
     userId: zod.number(),
