@@ -28,12 +28,30 @@ type InternalUser = { id: number; role: string; deletedAt: Date | null };
  */
 const CACHE_LIMIT = 5_000;
 const clerkIdToInternal = new Map<string, InternalUser>();
+const internalIdToClerkId = new Map<number, string>();
 function cacheSet(key: string, value: InternalUser): void {
   if (clerkIdToInternal.size >= CACHE_LIMIT) {
     const oldest = clerkIdToInternal.keys().next().value;
-    if (oldest !== undefined) clerkIdToInternal.delete(oldest);
+    if (oldest !== undefined) {
+      const stale = clerkIdToInternal.get(oldest);
+      clerkIdToInternal.delete(oldest);
+      if (stale) internalIdToClerkId.delete(stale.id);
+    }
   }
   clerkIdToInternal.set(key, value);
+  internalIdToClerkId.set(value.id, key);
+}
+
+/**
+ * Drop cached auth state for the given internal user id. Called from the
+ * account-deletion flow so the very next request from that user is forced
+ * back through `findByClerkId` and picks up the new `deletedAt` value (and
+ * is therefore rejected with 410 by requireAuth).
+ */
+export function invalidateAuthCache(internalUserId: number): void {
+  const clerkId = internalIdToClerkId.get(internalUserId);
+  if (clerkId) clerkIdToInternal.delete(clerkId);
+  internalIdToClerkId.delete(internalUserId);
 }
 
 async function findByClerkId(clerkUserId: string): Promise<InternalUser | null> {
@@ -220,6 +238,7 @@ export const requireAuth: RequestHandler = async (
       // Drop the cached entry so a future undelete (admin support flow)
       // doesn't keep serving 410 forever.
       clerkIdToInternal.delete(clerkUserId);
+      internalIdToClerkId.delete(internal.id);
       res.status(410).json({
         error: "Account scheduled for deletion",
         deletedAt: internal.deletedAt.toISOString(),

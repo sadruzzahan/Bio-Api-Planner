@@ -19,6 +19,8 @@ import {
   auditLogTable,
 } from "@workspace/db";
 import { recordAudit } from "../lib/audit";
+import { invalidateAuthCache } from "../middlewares/requireAuth";
+import { invalidateConsentCache } from "../middlewares/requireConsent";
 import { logger } from "../lib/logger";
 import {
   decrypt,
@@ -217,6 +219,15 @@ router.delete("/users/me", async (req, res): Promise<void> => {
     .update(usersTable)
     .set({ deletedAt: now, deletionRequestedAt: now })
     .where(eq(usersTable.id, userId));
+
+  // Eagerly drop the per-process auth + consent caches. Without this, the
+  // requireAuth cache could keep serving the pre-delete `{deletedAt: null}`
+  // record for up to CACHE_LIMIT evictions, letting the just-deleted user
+  // continue to pass auth on subsequent requests until eviction. After
+  // invalidation the next request re-reads the row and trips the 410
+  // deletion-lockout branch.
+  invalidateAuthCache(userId);
+  invalidateConsentCache(userId);
 
   await recordAudit({
     userId,

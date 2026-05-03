@@ -8,9 +8,16 @@ import {
 } from "@workspace/api-zod";
 import { recordAudit } from "../lib/audit";
 
-const router: IRouter = Router();
+/**
+ * Read-only profile endpoints. Mounted ABOVE the consent gate so a
+ * not-yet-consented user can fetch their account state (used by the
+ * frontend modal to show name/email when prompting for acceptance).
+ *
+ * No mutation routes belong here — see usersWriteRouter for those.
+ */
+export const usersReadRouter: IRouter = Router();
 
-router.get("/users/me", async (req, res): Promise<void> => {
+usersReadRouter.get("/users/me", async (req, res): Promise<void> => {
   const userId = req.userId!;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
   if (!user) {
@@ -20,7 +27,14 @@ router.get("/users/me", async (req, res): Promise<void> => {
   res.json(GetCurrentUserResponse.parse(user));
 });
 
-router.patch("/users/me", async (req, res): Promise<void> => {
+/**
+ * Mutating profile endpoints. Mounted BELOW the consent gate — a user
+ * cannot edit profile fields (including onboardedAt) without first
+ * having recorded acceptance for every required legal document.
+ */
+export const usersWriteRouter: IRouter = Router();
+
+usersWriteRouter.patch("/users/me", async (req, res): Promise<void> => {
   const userId = req.userId!;
   const parsed = UpdateCurrentUserBody.safeParse(req.body);
   if (!parsed.success) {
@@ -54,4 +68,6 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   res.json(UpdateCurrentUserResponse.parse(user));
 });
 
-export default router;
+// Default export keeps backward compatibility with prior imports — points to
+// the read-only router so accidental pre-consent usage cannot expose writes.
+export default usersReadRouter;
