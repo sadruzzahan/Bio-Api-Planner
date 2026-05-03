@@ -13,6 +13,10 @@ const STORAGE_KEY = "bioos.cookie-consent.v1";
 interface StoredConsent {
   version: string;
   acceptedAt: string;
+  /** True iff the user opted in to ANY non-essential category. Persisted so
+   *  the server-side sync (which can run in a later session) reflects the
+   *  user's actual decision rather than re-deriving it. */
+  accepted: boolean;
   categories: { essential: true; analytics: boolean; marketing: boolean };
 }
 
@@ -73,10 +77,11 @@ export function CookieConsentBanner() {
       data: {
         document: "cookies",
         version: stored.version,
-        accepted:
-          stored.categories.analytics || stored.categories.marketing
-            ? true
-            : true, // essential always true → record acceptance either way
+        // Preserve the user's true decision: `accepted` reflects whether
+        // they opted in to any non-essential category at the time the
+        // banner was dismissed. Records written before this field was
+        // introduced default to `false` (a conservative reject-all).
+        accepted: stored.accepted ?? false,
         categories: stored.categories,
       },
     });
@@ -89,6 +94,7 @@ export function CookieConsentBanner() {
     writeStored({
       version: LEGAL_VERSIONS.cookies,
       acceptedAt: new Date().toISOString(),
+      accepted,
       categories,
     });
     setVisible(false);

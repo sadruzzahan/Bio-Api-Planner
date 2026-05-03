@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { clerkClient } from "@clerk/express";
+import JSZip from "jszip";
 import {
   db,
   usersTable,
@@ -48,18 +49,20 @@ router.get("/audit/log", async (req, res): Promise<void> => {
 
 /**
  * GET /users/me/export
- * Streams a JSON archive of every row owned by the user. Synchronous for v1
- * (Email task will switch this to a background job + emailed link). The
- * response is a single JSON object keyed by table; large fields are inlined.
+ *
+ * Returns a ZIP archive containing one JSON file per table the user owns,
+ * plus a `manifest.json` with schema version, export timestamp, and per-table
+ * row counts. This is the GDPR/CCPA "data portability" deliverable: each
+ * table is a separate JSON file so the user (or a downstream tool) can
+ * inspect specific datasets without parsing a single monolithic blob.
+ *
+ * Synchronous for v1 (a future task will move large exports to a background
+ * job + emailed link). Memory-safe for current row volumes; revisit if any
+ * single user can amass tens of MB of any one table.
  */
 router.get("/users/me/export", async (req, res): Promise<void> => {
   const userId = req.userId!;
   const startedAt = Date.now();
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="bioos-export-${userId}-${new Date().toISOString().slice(0, 10)}.json"`,
-  );
 
   try {
     const [
@@ -117,50 +120,63 @@ router.get("/users/me/export", async (req, res): Promise<void> => {
       };
     });
 
-    const payload = {
+    const tables: Record<string, unknown[]> = {
+      users: userExport,
+      biometric_readings: biometrics,
+      sleep_sessions: sleep,
+      glucose_readings: glucose,
+      activity_sessions: activity,
+      biological_states: states,
+      interventions,
+      meals,
+      supplements,
+      chat_messages: chats,
+      integrations: integrationsExport,
+      consent_records: consent,
+      audit_log: audit,
+    };
+
+    const counts: Record<string, number> = {};
+    for (const [name, rows] of Object.entries(tables)) {
+      counts[name] = rows.length;
+    }
+
+    const manifest = {
       schemaVersion: 1,
       exportedAt: new Date().toISOString(),
       generatedInMs: Date.now() - startedAt,
-      user: userExport,
-      tables: {
-        biometric_readings: biometrics,
-        sleep_sessions: sleep,
-        glucose_readings: glucose,
-        activity_sessions: activity,
-        biological_states: states,
-        interventions,
-        meals,
-        supplements,
-        chat_messages: chats,
-        integrations: integrationsExport,
-        consent_records: consent,
-        audit_log: audit,
-      },
-      counts: {
-        biometric_readings: biometrics.length,
-        sleep_sessions: sleep.length,
-        glucose_readings: glucose.length,
-        activity_sessions: activity.length,
-        biological_states: states.length,
-        interventions: interventions.length,
-        meals: meals.length,
-        supplements: supplements.length,
-        chat_messages: chats.length,
-        integrations: integrations.length,
-        consent_records: consent.length,
-        audit_log: audit.length,
-      },
+      userId,
+      counts,
+      files: Object.keys(tables).map((name) => `${name}.json`),
+      readme:
+        "Each *.json file contains one table you own. See manifest.json for row counts and schema version.",
     };
+
+    const zip = new JSZip();
+    zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+    for (const [name, rows] of Object.entries(tables)) {
+      zip.file(`${name}.json`, JSON.stringify(rows, null, 2));
+    }
+
+    const buffer = await zip.generateAsync({
+      type: "nodebuffer",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 },
+    });
 
     await recordAudit({
       userId,
       action: "export",
       entity: "user.data",
-      metadata: { counts: payload.counts },
+      metadata: { counts, format: "zip", bytes: buffer.length },
       req,
     });
 
-    res.status(200).send(JSON.stringify(payload, null, 2));
+    const filename = `bioos-export-${userId}-${new Date().toISOString().slice(0, 10)}.zip`;
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", String(buffer.length));
+    res.status(200).end(buffer);
   } catch (err) {
     logger.error({ err }, "data export failed");
     if (!res.headersSent) {
