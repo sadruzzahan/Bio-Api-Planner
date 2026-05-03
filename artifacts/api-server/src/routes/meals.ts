@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { coerceDateFields } from "../lib/query-dates";
 import { parsePagination } from "../lib/pagination";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -45,6 +46,13 @@ router.post("/meals", async (req, res): Promise<void> => {
     .insert(mealsTable)
     .values({ ...parsed.data, userId })
     .returning();
+  await recordAudit({
+    userId,
+    action: "create",
+    entity: "meal",
+    entityId: row?.id,
+    req,
+  });
   res.status(201).json(row);
 });
 

@@ -29,6 +29,11 @@ import Activity from "@/pages/activity";
 import Interventions from "@/pages/interventions";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
+import TermsPage from "@/pages/legal/terms";
+import PrivacyLegalPage from "@/pages/legal/privacy";
+import DisclaimerPage from "@/pages/legal/disclaimer";
+import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { PostSigninConsentModal } from "@/components/post-signin-consent-modal";
 
 const queryClient = new QueryClient();
 
@@ -85,9 +90,11 @@ function Protected({
   return (
     <>
       <Show when="signed-in">
-        <OnboardingGate allowWithoutOnboarding={allowWithoutOnboarding}>
-          {children}
-        </OnboardingGate>
+        <PostSigninConsentModal>
+          <OnboardingGate allowWithoutOnboarding={allowWithoutOnboarding}>
+            {children}
+          </OnboardingGate>
+        </PostSigninConsentModal>
       </Show>
       <Show when="signed-out">
         <RedirectToSignInWithReturn />
@@ -146,6 +153,9 @@ function Router() {
       <Route path="/" component={HomeRedirect} />
       <Route path="/sign-in/*?" component={SignInPage} />
       <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/legal/terms" component={TermsPage} />
+      <Route path="/legal/privacy" component={PrivacyLegalPage} />
+      <Route path="/legal/disclaimer" component={DisclaimerPage} />
       <Route path="/onboarding">{() => <Protected allowWithoutOnboarding><Onboarding /></Protected>}</Route>
       <Route path="/dashboard">{() => <Protected><Dashboard /></Protected>}</Route>
       <Route path="/biometrics">{() => <Protected><Biometrics /></Protected>}</Route>
@@ -185,6 +195,7 @@ function ClerkProviderWithRoutes() {
             <ErrorBoundary>
               <Router />
             </ErrorBoundary>
+            <CookieConsentBanner />
             <Toaster theme="dark" />
           </TooltipProvider>
         </ThemeProvider>

@@ -6,6 +6,7 @@ import {
   UpdateCurrentUserBody,
   UpdateCurrentUserResponse,
 } from "@workspace/api-zod";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -42,6 +43,14 @@ router.patch("/users/me", async (req, res): Promise<void> => {
     res.status(404).json({ error: "User not found" });
     return;
   }
+  await recordAudit({
+    userId,
+    action: "update",
+    entity: "user",
+    entityId: userId,
+    metadata: { fields: Object.keys(updates) },
+    req,
+  });
   res.json(UpdateCurrentUserResponse.parse(user));
 });
 

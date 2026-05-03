@@ -15,6 +15,77 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary List the current user's consent records
+ */
+export const ListConsentResponse = zod.object({
+  records: zod.array(
+    zod.object({
+      id: zod.number(),
+      userId: zod.number(),
+      document: zod.string(),
+      version: zod.string(),
+      accepted: zod.boolean(),
+      categories: zod.record(zod.string(), zod.unknown()).nullish(),
+      ip: zod.string().nullish(),
+      userAgent: zod.string().nullish(),
+      acceptedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Record acceptance (or revocation) of a legal document
+ */
+export const RecordConsentBody = zod.object({
+  document: zod.enum(["tos", "privacy", "disclaimer", "cookies"]),
+  version: zod.string(),
+  accepted: zod.boolean().optional(),
+  categories: zod.record(zod.string(), zod.unknown()).nullish(),
+});
+
+/**
+ * @summary Recent audit-log entries for the current user
+ */
+export const listAuditLogQueryLimitDefault = 100;
+export const listAuditLogQueryLimitMax = 200;
+
+export const ListAuditLogQueryParams = zod.object({
+  limit: zod.coerce
+    .number()
+    .max(listAuditLogQueryLimitMax)
+    .default(listAuditLogQueryLimitDefault),
+});
+
+export const ListAuditLogResponse = zod.object({
+  entries: zod.array(
+    zod.object({
+      id: zod.number(),
+      userId: zod.number().nullish(),
+      actorId: zod.number().nullish(),
+      action: zod.string(),
+      entity: zod.string(),
+      entityId: zod.string().nullish(),
+      metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+      ip: zod.string().nullish(),
+      userAgent: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Download a JSON archive of all data owned by the current user
+ */
+export const ExportMyDataResponse = zod.record(zod.string(), zod.unknown());
+
+/**
+ * @summary Soft-delete the current user account (purge after 30 days)
+ */
+export const DeleteCurrentUserBody = zod.object({
+  confirmEmail: zod.string(),
+});
+
+/**
  * @summary Get current user profile
  */
 export const GetCurrentUserResponse = zod.object({

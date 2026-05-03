@@ -246,12 +246,24 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer className="border-t border-border py-8 container mx-auto px-6 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase text-sm">
-          <Activity className="w-4 h-4" />
-          <span>BioOS</span>
+      <footer className="border-t border-border py-8 container mx-auto px-6 relative z-10">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-primary font-bold tracking-widest uppercase text-sm">
+            <Activity className="w-4 h-4" />
+            <span>BioOS</span>
+          </div>
+          <nav className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            <Link href="/legal/terms" className="hover:text-primary" data-testid="footer-terms">Terms</Link>
+            <Link href="/legal/privacy" className="hover:text-primary" data-testid="footer-privacy">Privacy</Link>
+            <Link href="/legal/disclaimer" className="hover:text-primary" data-testid="footer-disclaimer">Medical disclaimer</Link>
+          </nav>
+          <p className="text-xs text-muted-foreground font-mono w-full sm:w-auto sm:text-right">
+            Mission Control for Human Performance
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground font-mono">Mission Control for Human Performance</p>
+        <p className="mt-4 text-[10px] font-mono text-muted-foreground/70 leading-relaxed max-w-3xl">
+          BioOS is an informational tool. It is not a medical device and does not provide medical advice, diagnosis, or treatment. Always consult a qualified clinician before changing your health routine. © {new Date().getFullYear()} BioOS, Inc.
+        </p>
       </footer>
     </div>
   );

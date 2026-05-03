@@ -32,6 +32,71 @@ export interface UpdateUserBody {
   onboardedAt?: string | null;
 }
 
+export type ConsentRecordCategories = { [key: string]: unknown } | null;
+
+export interface ConsentRecord {
+  id: number;
+  userId: number;
+  document: string;
+  version: string;
+  accepted: boolean;
+  categories?: ConsentRecordCategories;
+  ip?: string | null;
+  userAgent?: string | null;
+  acceptedAt: string;
+}
+
+export interface ListConsentResponse {
+  records: ConsentRecord[];
+}
+
+export type CreateConsentBodyDocument =
+  (typeof CreateConsentBodyDocument)[keyof typeof CreateConsentBodyDocument];
+
+export const CreateConsentBodyDocument = {
+  tos: "tos",
+  privacy: "privacy",
+  disclaimer: "disclaimer",
+  cookies: "cookies",
+} as const;
+
+export type CreateConsentBodyCategories = { [key: string]: unknown } | null;
+
+export interface CreateConsentBody {
+  document: CreateConsentBodyDocument;
+  version: string;
+  accepted?: boolean;
+  categories?: CreateConsentBodyCategories;
+}
+
+export type AuditLogEntryMetadata = { [key: string]: unknown } | null;
+
+export interface AuditLogEntry {
+  id: number;
+  userId?: number | null;
+  actorId?: number | null;
+  action: string;
+  entity: string;
+  entityId?: string | null;
+  metadata?: AuditLogEntryMetadata;
+  ip?: string | null;
+  userAgent?: string | null;
+  createdAt: string;
+}
+
+export interface ListAuditLogResponse {
+  entries: AuditLogEntry[];
+}
+
+export interface DeleteAccountBody {
+  confirmEmail: string;
+}
+
+export interface DeleteAccountResponse {
+  deletedAt: string;
+  purgeAfter: string;
+}
+
 export interface BiometricReading {
   id: number;
   userId: number;
@@ -281,6 +346,15 @@ export type UnauthorizedResponse = ErrorBody;
  * Authenticated user is not allowed to perform this action
  */
 export type ForbiddenResponse = ErrorBody;
+
+export type ListAuditLogParams = {
+  /**
+   * @maximum 200
+   */
+  limit?: number;
+};
+
+export type ExportMyData200 = { [key: string]: unknown };
 
 export type ListBiometricsParams = {
   metric?: string;

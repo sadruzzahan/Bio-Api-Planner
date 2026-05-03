@@ -12,6 +12,7 @@ import {
   GetChatHistoryQueryParams,
   GetChatHistoryResponse,
 } from "@workspace/api-zod";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -55,6 +56,14 @@ router.post("/chat", async (req, res): Promise<void> => {
     .insert(chatMessagesTable)
     .values({ userId, role: "user", content: body.data.message })
     .returning();
+  await recordAudit({
+    userId,
+    action: "create",
+    entity: "chat.message",
+    entityId: userMsg?.id,
+    metadata: { length: body.data.message.length },
+    req,
+  });
 
   let anthropicClient: { messages: { create: Function } } | null = null;
   try {

@@ -23,10 +23,15 @@ import type {
   BiometricSummary,
   ChatMessage,
   ChatResponse,
+  ConsentRecord,
   CreateBiometricBody,
+  CreateConsentBody,
   CreateMealBody,
   CreateSupplementBody,
   Dashboard,
+  DeleteAccountBody,
+  DeleteAccountResponse,
+  ExportMyData200,
   ForbiddenResponse,
   GetChatHistoryParams,
   GetStateHistoryParams,
@@ -37,7 +42,10 @@ import type {
   Integration,
   Intervention,
   ListActivityParams,
+  ListAuditLogParams,
+  ListAuditLogResponse,
   ListBiometricsParams,
+  ListConsentResponse,
   ListGlucoseParams,
   ListInterventionsParams,
   ListMealsParams,
@@ -137,6 +145,432 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List the current user's consent records
+ */
+export const getListConsentUrl = () => {
+  return `/api/consent`;
+};
+
+export const listConsent = async (
+  options?: RequestInit,
+): Promise<ListConsentResponse> => {
+  return customFetch<ListConsentResponse>(getListConsentUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListConsentQueryKey = () => {
+  return [`/api/consent`] as const;
+};
+
+export const getListConsentQueryOptions = <
+  TData = Awaited<ReturnType<typeof listConsent>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listConsent>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListConsentQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listConsent>>> = ({
+    signal,
+  }) => listConsent({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listConsent>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListConsentQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listConsent>>
+>;
+export type ListConsentQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary List the current user's consent records
+ */
+
+export function useListConsent<
+  TData = Awaited<ReturnType<typeof listConsent>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listConsent>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListConsentQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Record acceptance (or revocation) of a legal document
+ */
+export const getRecordConsentUrl = () => {
+  return `/api/consent`;
+};
+
+export const recordConsent = async (
+  createConsentBody: CreateConsentBody,
+  options?: RequestInit,
+): Promise<ConsentRecord> => {
+  return customFetch<ConsentRecord>(getRecordConsentUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createConsentBody),
+  });
+};
+
+export const getRecordConsentMutationOptions = <
+  TError = ErrorType<void | UnauthorizedResponse | ForbiddenResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordConsent>>,
+    TError,
+    { data: BodyType<CreateConsentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof recordConsent>>,
+  TError,
+  { data: BodyType<CreateConsentBody> },
+  TContext
+> => {
+  const mutationKey = ["recordConsent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof recordConsent>>,
+    { data: BodyType<CreateConsentBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return recordConsent(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RecordConsentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof recordConsent>>
+>;
+export type RecordConsentMutationBody = BodyType<CreateConsentBody>;
+export type RecordConsentMutationError = ErrorType<
+  void | UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary Record acceptance (or revocation) of a legal document
+ */
+export const useRecordConsent = <
+  TError = ErrorType<void | UnauthorizedResponse | ForbiddenResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof recordConsent>>,
+    TError,
+    { data: BodyType<CreateConsentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof recordConsent>>,
+  TError,
+  { data: BodyType<CreateConsentBody> },
+  TContext
+> => {
+  return useMutation(getRecordConsentMutationOptions(options));
+};
+
+/**
+ * @summary Recent audit-log entries for the current user
+ */
+export const getListAuditLogUrl = (params?: ListAuditLogParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/audit/log?${stringifiedParams}`
+    : `/api/audit/log`;
+};
+
+export const listAuditLog = async (
+  params?: ListAuditLogParams,
+  options?: RequestInit,
+): Promise<ListAuditLogResponse> => {
+  return customFetch<ListAuditLogResponse>(getListAuditLogUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListAuditLogQueryKey = (params?: ListAuditLogParams) => {
+  return [`/api/audit/log`, ...(params ? [params] : [])] as const;
+};
+
+export const getListAuditLogQueryOptions = <
+  TData = Awaited<ReturnType<typeof listAuditLog>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(
+  params?: ListAuditLogParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAuditLog>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListAuditLogQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listAuditLog>>> = ({
+    signal,
+  }) => listAuditLog(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listAuditLog>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListAuditLogQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listAuditLog>>
+>;
+export type ListAuditLogQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary Recent audit-log entries for the current user
+ */
+
+export function useListAuditLog<
+  TData = Awaited<ReturnType<typeof listAuditLog>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(
+  params?: ListAuditLogParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listAuditLog>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListAuditLogQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Download a JSON archive of all data owned by the current user
+ */
+export const getExportMyDataUrl = () => {
+  return `/api/users/me/export`;
+};
+
+export const exportMyData = async (
+  options?: RequestInit,
+): Promise<ExportMyData200> => {
+  return customFetch<ExportMyData200>(getExportMyDataUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getExportMyDataQueryKey = () => {
+  return [`/api/users/me/export`] as const;
+};
+
+export const getExportMyDataQueryOptions = <
+  TData = Awaited<ReturnType<typeof exportMyData>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof exportMyData>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getExportMyDataQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof exportMyData>>> = ({
+    signal,
+  }) => exportMyData({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof exportMyData>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ExportMyDataQueryResult = NonNullable<
+  Awaited<ReturnType<typeof exportMyData>>
+>;
+export type ExportMyDataQueryError = ErrorType<
+  UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary Download a JSON archive of all data owned by the current user
+ */
+
+export function useExportMyData<
+  TData = Awaited<ReturnType<typeof exportMyData>>,
+  TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof exportMyData>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getExportMyDataQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Soft-delete the current user account (purge after 30 days)
+ */
+export const getDeleteCurrentUserUrl = () => {
+  return `/api/users/me`;
+};
+
+export const deleteCurrentUser = async (
+  deleteAccountBody: DeleteAccountBody,
+  options?: RequestInit,
+): Promise<DeleteAccountResponse> => {
+  return customFetch<DeleteAccountResponse>(getDeleteCurrentUserUrl(), {
+    ...options,
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(deleteAccountBody),
+  });
+};
+
+export const getDeleteCurrentUserMutationOptions = <
+  TError = ErrorType<void | UnauthorizedResponse | ForbiddenResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCurrentUser>>,
+    TError,
+    { data: BodyType<DeleteAccountBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCurrentUser>>,
+  TError,
+  { data: BodyType<DeleteAccountBody> },
+  TContext
+> => {
+  const mutationKey = ["deleteCurrentUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCurrentUser>>,
+    { data: BodyType<DeleteAccountBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return deleteCurrentUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCurrentUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteCurrentUser>>
+>;
+export type DeleteCurrentUserMutationBody = BodyType<DeleteAccountBody>;
+export type DeleteCurrentUserMutationError = ErrorType<
+  void | UnauthorizedResponse | ForbiddenResponse
+>;
+
+/**
+ * @summary Soft-delete the current user account (purge after 30 days)
+ */
+export const useDeleteCurrentUser = <
+  TError = ErrorType<void | UnauthorizedResponse | ForbiddenResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCurrentUser>>,
+    TError,
+    { data: BodyType<DeleteAccountBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCurrentUser>>,
+  TError,
+  { data: BodyType<DeleteAccountBody> },
+  TContext
+> => {
+  return useMutation(getDeleteCurrentUserMutationOptions(options));
+};
 
 /**
  * @summary Get current user profile

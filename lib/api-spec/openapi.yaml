@@ -24,6 +24,8 @@ tags:
   - name: dashboard
   - name: insights
   - name: chat
+  - name: privacy
+  - name: consent
 
 paths:
   /healthz:
@@ -40,7 +42,109 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
+  /consent:
+    get:
+      operationId: listConsent
+      tags: [ consent ]
+      summary: List the current user's consent records
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListConsentResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: recordConsent
+      tags: [ consent ]
+      summary: Record acceptance (or revocation) of a legal document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConsentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentRecord"
+        "400":
+          description: Bad request
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /audit/log:
+    get:
+      operationId: listAuditLog
+      tags: [ privacy ]
+      summary: Recent audit-log entries for the current user
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 100, maximum: 200 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAuditLogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /users/me/export:
+    get:
+      operationId: exportMyData
+      tags: [ privacy ]
+      summary: Download a JSON archive of all data owned by the current user
+      responses:
+        "200":
+          description: A downloadable JSON archive
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   /users/me:
+    delete:
+      operationId: deleteCurrentUser
+      tags: [ privacy ]
+      summary: Soft-delete the current user account (purge after 30 days)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteAccountBody"
+      responses:
+        "202":
+          description: Deletion scheduled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteAccountResponse"
+        "400":
+          description: Bad request
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
     get:
       operationId: getCurrentUser
       tags: [ users ]
@@ -691,6 +795,75 @@ components:
         chronotype: { type: string }
         primaryGoal: { type: string }
         onboardedAt: { type: string, format: date-time, nullable: true }
+
+    ConsentRecord:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer }
+        document: { type: string }
+        version: { type: string }
+        accepted: { type: boolean }
+        categories: { type: object, additionalProperties: true, nullable: true }
+        ip: { type: string, nullable: true }
+        userAgent: { type: string, nullable: true }
+        acceptedAt: { type: string, format: date-time }
+      required: [ id, userId, document, version, accepted, acceptedAt ]
+
+    ListConsentResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items: { $ref: "#/components/schemas/ConsentRecord" }
+      required: [ records ]
+
+    CreateConsentBody:
+      type: object
+      properties:
+        document:
+          type: string
+          enum: [ tos, privacy, disclaimer, cookies ]
+        version: { type: string }
+        accepted: { type: boolean }
+        categories: { type: object, additionalProperties: true, nullable: true }
+      required: [ document, version ]
+
+    AuditLogEntry:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: integer, nullable: true }
+        actorId: { type: integer, nullable: true }
+        action: { type: string }
+        entity: { type: string }
+        entityId: { type: string, nullable: true }
+        metadata: { type: object, additionalProperties: true, nullable: true }
+        ip: { type: string, nullable: true }
+        userAgent: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [ id, action, entity, createdAt ]
+
+    ListAuditLogResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items: { $ref: "#/components/schemas/AuditLogEntry" }
+      required: [ entries ]
+
+    DeleteAccountBody:
+      type: object
+      properties:
+        confirmEmail: { type: string }
+      required: [ confirmEmail ]
+
+    DeleteAccountResponse:
+      type: object
+      properties:
+        deletedAt: { type: string, format: date-time }
+        purgeAfter: { type: string, format: date-time }
+      required: [ deletedAt, purgeAfter ]
 
     BiometricReading:
       type: object

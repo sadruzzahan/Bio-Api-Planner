@@ -13,24 +13,39 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const usersTable = pgTable("users", {
-  id: serial("id").primaryKey(),
-  clerkId: text("clerk_id").unique().notNull(),
-  email: text("email").notNull().unique(),
-  name: text("name").notNull(),
-  role: text("role").notNull().default("user"),
-  tier: text("tier").notNull().default("basic"),
-  chronotype: text("chronotype").notNull().default("intermediate"),
-  primaryGoal: text("primary_goal").notNull().default("performance"),
-  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const usersTable = pgTable(
+  "users",
+  {
+    id: serial("id").primaryKey(),
+    clerkId: text("clerk_id").unique().notNull(),
+    // Plaintext email is retained for backwards compatibility with the existing
+    // unique index and external lookups (Clerk webhooks, support tooling). The
+    // `emailEncrypted` column holds the AES-256-GCM ciphertext intended for
+    // disk-at-rest exposure, and `emailLookup` holds a deterministic SHA-256
+    // hash used as the unique-search key when callers don't have the raw email.
+    email: text("email").notNull().unique(),
+    emailEncrypted: text("email_encrypted"),
+    emailLookup: text("email_lookup").unique(),
+    name: text("name").notNull(),
+    role: text("role").notNull().default("user"),
+    tier: text("tier").notNull().default("basic"),
+    chronotype: text("chronotype").notNull().default("intermediate"),
+    primaryGoal: text("primary_goal").notNull().default("performance"),
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletionRequestedAt: timestamp("deletion_requested_at", { withTimezone: true }),
+  },
+  (t) => ({
+    deletedAtIdx: index("users_deleted_at_idx").on(t.deletedAt),
+  }),
+);
 
 export const biometricReadingsTable = pgTable(
   "biometric_readings",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => usersTable.id),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     source: text("source").notNull(),
     metric: text("metric").notNull(),
     value: doublePrecision("value").notNull(),
@@ -50,7 +65,7 @@ export const sleepSessionsTable = pgTable(
   "sleep_sessions",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => usersTable.id),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     source: text("source").notNull(),
     date: date("date").notNull(),
     totalMinutes: integer("total_minutes").notNull(),
@@ -71,7 +86,7 @@ export const glucoseReadingsTable = pgTable(
   "glucose_readings",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => usersTable.id),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     source: text("source").notNull().default("cgm"),
     valueMgdl: doublePrecision("value_mgdl").notNull(),
     mealContext: text("meal_context").notNull().default("ambient"),
@@ -86,7 +101,7 @@ export const activitySessionsTable = pgTable(
   "activity_sessions",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => usersTable.id),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     source: text("source").notNull(),
     type: text("type").notNull(),
     durationMinutes: integer("duration_minutes").notNull(),
@@ -103,7 +118,7 @@ export const activitySessionsTable = pgTable(
 
 export const biologicalStatesTable = pgTable("biological_states", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   computedAt: timestamp("computed_at", { withTimezone: true }).notNull().defaultNow(),
   energyState: text("energy_state").notNull(),
   recoveryState: text("recovery_state").notNull(),
@@ -116,7 +131,7 @@ export const biologicalStatesTable = pgTable("biological_states", {
 
 export const interventionsTable = pgTable("interventions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   title: text("title").notNull(),
   action: text("action").notNull(),
@@ -129,7 +144,7 @@ export const interventionsTable = pgTable("interventions", {
 
 export const mealsTable = pgTable("meals", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   loggedAt: timestamp("logged_at", { withTimezone: true }).notNull(),
   description: text("description").notNull(),
   glycemicImpact: text("glycemic_impact").notNull().default("medium"),
@@ -142,7 +157,7 @@ export const mealsTable = pgTable("meals", {
 
 export const supplementsTable = pgTable("supplements", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   doseMg: doublePrecision("dose_mg").notNull(),
   timing: text("timing").notNull(),
@@ -155,7 +170,7 @@ export const chatMessagesTable = pgTable(
   "chat_messages",
   {
     id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => usersTable.id),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     role: text("role").notNull(),
     content: text("content").notNull(),
     contextSnapshot: jsonb("context_snapshot"),
@@ -168,13 +183,53 @@ export const chatMessagesTable = pgTable(
 
 export const integrationsTable = pgTable("integrations", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => usersTable.id),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   provider: text("provider").notNull(),
   category: text("category").notNull(),
   status: text("status").notNull().default("disconnected"),
   connectedAt: timestamp("connected_at", { withTimezone: true }),
   metadata: jsonb("metadata").notNull().default({}),
 });
+
+// --- Compliance / Privacy tables ----------------------------------------------
+
+export const consentRecordsTable = pgTable(
+  "consent_records",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    document: text("document").notNull(), // 'tos' | 'privacy' | 'disclaimer' | 'cookies'
+    version: text("version").notNull(),
+    accepted: boolean("accepted").notNull().default(true),
+    categories: jsonb("categories"), // for cookie consent: { essential, analytics, marketing }
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userDocIdx: index("consent_user_doc_idx").on(t.userId, t.document),
+  }),
+);
+
+// Append-only audit log. No UPDATE/DELETE routes are exposed for this table.
+export const auditLogTable = pgTable(
+  "audit_log",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").references(() => usersTable.id, { onDelete: "set null" }),
+    actorId: integer("actor_id").references(() => usersTable.id, { onDelete: "set null" }),
+    action: text("action").notNull(), // 'create' | 'update' | 'delete' | 'export' | 'consent.accept' | ...
+    entity: text("entity").notNull(), // table-ish name: 'biometric' | 'sleep' | 'chat' | 'user' | ...
+    entityId: text("entity_id"),
+    metadata: jsonb("metadata"),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userCreatedIdx: index("audit_user_created_idx").on(t.userId, t.createdAt),
+  }),
+);
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ id: true, createdAt: true });
 export type User = typeof usersTable.$inferSelect;
@@ -212,3 +267,11 @@ export type ChatMessage = typeof chatMessagesTable.$inferSelect;
 
 export const insertIntegrationSchema = createInsertSchema(integrationsTable).omit({ id: true });
 export type Integration = typeof integrationsTable.$inferSelect;
+
+export const insertConsentRecordSchema = createInsertSchema(consentRecordsTable).omit({ id: true, acceptedAt: true });
+export type ConsentRecord = typeof consentRecordsTable.$inferSelect;
+export type InsertConsentRecord = z.infer<typeof insertConsentRecordSchema>;
+
+export const insertAuditLogSchema = createInsertSchema(auditLogTable).omit({ id: true, createdAt: true });
+export type AuditLogEntry = typeof auditLogTable.$inferSelect;
+export type InsertAuditLogEntry = z.infer<typeof insertAuditLogSchema>;

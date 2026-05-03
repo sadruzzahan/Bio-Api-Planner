@@ -14,6 +14,8 @@ import integrationsRouter from "./integrations";
 import dashboardRouter from "./dashboard";
 import insightsRouter from "./insights";
 import chatRouter from "./chat";
+import consentRouter from "./consent";
+import privacyRouter from "./privacy";
 
 const router: IRouter = Router();
 
@@ -23,6 +25,8 @@ router.use(healthRouter);
 // All other routes require an authenticated Clerk session.
 router.use(requireAuth);
 router.use(usersRouter);
+router.use(consentRouter);
+router.use(privacyRouter);
 router.use(biometricsRouter);
 router.use(sleepRouter);
 router.use(glucoseRouter);

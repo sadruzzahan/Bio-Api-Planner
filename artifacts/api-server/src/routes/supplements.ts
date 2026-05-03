@@ -10,6 +10,7 @@ import {
   DeleteSupplementParams,
 } from "@workspace/api-zod";
 import { parsePagination } from "../lib/pagination";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -36,6 +37,14 @@ router.post("/supplements", async (req, res): Promise<void> => {
     .insert(supplementsTable)
     .values({ ...parsed.data, userId })
     .returning();
+  await recordAudit({
+    userId,
+    action: "create",
+    entity: "supplement",
+    entityId: row?.id,
+    metadata: { name: parsed.data.name },
+    req,
+  });
   res.status(201).json(row);
 });
 
@@ -60,6 +69,14 @@ router.patch("/supplements/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Supplement not found" });
     return;
   }
+  await recordAudit({
+    userId,
+    action: "update",
+    entity: "supplement",
+    entityId: row.id,
+    metadata: { fields: Object.keys(body.data) },
+    req,
+  });
   res.json(UpdateSupplementResponse.parse(row));
 });
 
@@ -78,6 +95,13 @@ router.delete("/supplements/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Supplement not found" });
     return;
   }
+  await recordAudit({
+    userId,
+    action: "delete",
+    entity: "supplement",
+    entityId: row.id,
+    req,
+  });
   res.sendStatus(204);
 });
 

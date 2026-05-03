@@ -11,12 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Save, Zap, Settings, Mail } from "lucide-react";
+import { Save, Zap, Settings, Mail, ShieldAlert, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { PrivacyTab } from "@/components/privacy-tab";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -70,7 +72,6 @@ export default function Profile() {
     });
   };
 
-  // Identity surfaced from Clerk (the source of truth for who the operator is).
   const displayName =
     clerkUser?.fullName || clerkUser?.username || user?.name || "Operator";
   const displayEmail =
@@ -179,87 +180,104 @@ export default function Profile() {
           </div>
         )}
 
-        {isLoading ? (
-          <div className="space-y-6">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-mono uppercase text-xs">Display Name</FormLabel>
-                    <FormControl>
-                      <Input className="font-mono bg-card" placeholder="Enter your name" {...field} data-testid="input-name" />
-                    </FormControl>
-                    <FormMessage className="font-mono text-xs" />
-                  </FormItem>
-                )}
-              />
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 font-mono uppercase tracking-wider text-xs">
+            <TabsTrigger value="profile" data-testid="tab-profile">
+              <UserIcon className="w-3.5 h-3.5 mr-2" /> Profile
+            </TabsTrigger>
+            <TabsTrigger value="privacy" data-testid="tab-privacy">
+              <ShieldAlert className="w-3.5 h-3.5 mr-2" /> Privacy &amp; data
+            </TabsTrigger>
+          </TabsList>
 
-              <FormField
-                control={form.control}
-                name="chronotype"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-mono uppercase text-xs">Chronotype</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="font-mono bg-card" data-testid="select-chronotype">
-                          <SelectValue placeholder="Select chronotype" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="early_bird">Early Bird (Lion) — peaks before noon</SelectItem>
-                        <SelectItem value="intermediate">Intermediate (Bear) — peaks mid-day</SelectItem>
-                        <SelectItem value="night_owl">Night Owl (Wolf) — peaks after 8pm</SelectItem>
-                        <SelectItem value="dolphin">Dolphin — light sleeper, irregular</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="font-mono text-xs" />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="primaryGoal"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-mono uppercase text-xs">Primary Mission Objective</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        className="font-mono bg-card resize-none h-32"
-                        placeholder="e.g. increase deep sleep, stabilize glucose, improve HRV baseline"
-                        {...field}
-                        data-testid="input-goals"
-                      />
-                    </FormControl>
-                    <FormMessage className="font-mono text-xs" />
-                  </FormItem>
-                )}
-              />
-
-              <div className="pt-4 flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={updateProfile.isPending}
-                  className="font-mono uppercase tracking-wider"
-                  data-testid="button-save-profile"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {updateProfile.isPending ? "Updating..." : "Save Configuration"}
-                </Button>
+          <TabsContent value="profile" className="mt-6">
+            {isLoading ? (
+              <div className="space-y-6">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full" />
               </div>
-            </form>
-          </Form>
-        )}
+            ) : (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-mono uppercase text-xs">Display Name</FormLabel>
+                        <FormControl>
+                          <Input className="font-mono bg-card" placeholder="Enter your name" {...field} data-testid="input-name" />
+                        </FormControl>
+                        <FormMessage className="font-mono text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="chronotype"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-mono uppercase text-xs">Chronotype</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="font-mono bg-card" data-testid="select-chronotype">
+                              <SelectValue placeholder="Select chronotype" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="early_bird">Early Bird (Lion) — peaks before noon</SelectItem>
+                            <SelectItem value="intermediate">Intermediate (Bear) — peaks mid-day</SelectItem>
+                            <SelectItem value="night_owl">Night Owl (Wolf) — peaks after 8pm</SelectItem>
+                            <SelectItem value="dolphin">Dolphin — light sleeper, irregular</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="font-mono text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="primaryGoal"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-mono uppercase text-xs">Primary Mission Objective</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            className="font-mono bg-card resize-none h-32"
+                            placeholder="e.g. increase deep sleep, stabilize glucose, improve HRV baseline"
+                            {...field}
+                            data-testid="input-goals"
+                          />
+                        </FormControl>
+                        <FormMessage className="font-mono text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="pt-4 flex justify-end">
+                    <Button
+                      type="submit"
+                      disabled={updateProfile.isPending}
+                      className="font-mono uppercase tracking-wider"
+                      data-testid="button-save-profile"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {updateProfile.isPending ? "Updating..." : "Save Configuration"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            )}
+          </TabsContent>
+
+          <TabsContent value="privacy" className="mt-6">
+            <PrivacyTab />
+          </TabsContent>
+        </Tabs>
       </motion.div>
     </Layout>
   );

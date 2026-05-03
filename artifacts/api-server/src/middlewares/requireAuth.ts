@@ -1,8 +1,10 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { encrypt, emailLookupHash } from "../lib/encryption";
+import { recordAudit } from "../lib/audit";
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -124,6 +126,8 @@ async function resolveInternalUser(
       .values({
         clerkId: clerkUserId,
         email: primaryEmail,
+        emailEncrypted: encrypt(primaryEmail),
+        emailLookup: emailLookupHash(primaryEmail),
         name: displayName,
         role: initialRole,
       })
@@ -144,6 +148,13 @@ async function resolveInternalUser(
 
   if (inserted) {
     cacheSet(clerkUserId, inserted);
+    // First sign-in for this Clerk identity. Audit it asynchronously.
+    void recordAudit({
+      userId: inserted.id,
+      action: "auth.signup",
+      entity: "user",
+      entityId: inserted.id,
+    });
     return inserted;
   }
 

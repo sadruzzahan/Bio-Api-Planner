@@ -11,13 +11,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Send, Activity, User, Bot, Brain, Heart, Zap, Moon } from "lucide-react";
 import { motion } from "framer-motion";
+import { MedicalDisclaimerPill, ChatFirstSessionDisclaimer } from "@/components/medical-disclaimer";
 
 const fmt1 = (v: number | null | undefined) => v != null ? Number(v).toFixed(1) : "--";
+
+const FIRST_SESSION_KEY = "bioos.chat.disclaimer.acknowledged";
 
 export default function Chat() {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [showFirstSessionBanner, setShowFirstSessionBanner] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(FIRST_SESSION_KEY) !== "1";
+  });
 
   const { data: messages, isLoading } = useGetChatHistory({ limit: 100 });
   const sendChat = useSendChatMessage();
@@ -165,6 +172,7 @@ export default function Chat() {
                         <span>{msg.role}</span>
                       </div>
                       <div className="leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                      {msg.role !== "user" && <MedicalDisclaimerPill />}
                     </div>
                   </div>
                 ))
@@ -182,6 +190,7 @@ export default function Chat() {
                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
+                    <MedicalDisclaimerPill />
                   </div>
                 </div>
               )}
@@ -209,6 +218,18 @@ export default function Chat() {
           </ScrollArea>
 
           <div className="p-4 border-t border-border bg-card shrink-0">
+            {showFirstSessionBanner && (
+              <ChatFirstSessionDisclaimer
+                onDismiss={() => {
+                  try {
+                    localStorage.setItem(FIRST_SESSION_KEY, "1");
+                  } catch {
+                    /* ignore — banner just won't persist dismissal */
+                  }
+                  setShowFirstSessionBanner(false);
+                }}
+              />
+            )}
             <form onSubmit={handleSend} className="flex gap-2">
               <Input
                 value={input}

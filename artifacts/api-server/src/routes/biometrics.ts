@@ -8,6 +8,7 @@ import {
   GetBiometricsSummaryResponse,
 } from "@workspace/api-zod";
 import { coerceDateFields } from "../lib/query-dates";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -47,6 +48,14 @@ router.post("/biometrics", async (req, res): Promise<void> => {
     .insert(biometricReadingsTable)
     .values({ ...parsed.data, userId })
     .returning();
+  await recordAudit({
+    userId,
+    action: "create",
+    entity: "biometric",
+    entityId: row?.id,
+    metadata: { metric: parsed.data.metric, source: parsed.data.source },
+    req,
+  });
   res.status(201).json(row);
 });
 

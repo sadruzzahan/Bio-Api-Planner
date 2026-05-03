@@ -8,6 +8,7 @@ import {
   clerkProxyMiddleware,
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
+import { securityHeaders } from "./middlewares/securityHeaders";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
@@ -32,6 +33,9 @@ app.use(
     },
   }),
 );
+
+// Privacy / security headers on every response.
+app.use(securityHeaders);
 
 // Clerk frontend API proxy must be mounted before any body parsers because it
 // streams raw bytes to the upstream service.

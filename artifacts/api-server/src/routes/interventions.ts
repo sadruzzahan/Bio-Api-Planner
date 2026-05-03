@@ -9,6 +9,7 @@ import {
   UpdateInterventionResponse,
 } from "@workspace/api-zod";
 import { parsePagination } from "../lib/pagination";
+import { recordAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -55,6 +56,14 @@ router.patch("/interventions/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Intervention not found" });
     return;
   }
+  await recordAudit({
+    userId,
+    action: "update",
+    entity: "intervention",
+    entityId: row.id,
+    metadata: { status: body.data.status },
+    req,
+  });
   res.json(UpdateInterventionResponse.parse(row));
 });
 
