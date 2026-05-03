@@ -109,17 +109,17 @@ export default function Interventions() {
             ))
           ) : filteredInterventions && filteredInterventions.length > 0 ? (
             filteredInterventions.map((intervention) => (
-              <Card 
-                key={intervention.id} 
+              <Card
+                key={intervention.id}
                 className={`bg-card/50 border-border relative overflow-hidden transition-all ${
-                  intervention.status === 'completed' ? 'opacity-60 grayscale-[0.5]' : ''
+                  intervention.status === 'executed' || intervention.status === 'dismissed' ? 'opacity-60' : ''
                 }`}
                 data-testid={`card-intervention-${intervention.id}`}
               >
                 {/* Decorative status bar */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                  intervention.status === 'completed' ? 'bg-green-500' :
-                  intervention.status === 'skipped' ? 'bg-muted' :
+                  intervention.status === 'executed' ? 'bg-green-500' :
+                  intervention.status === 'dismissed' ? 'bg-muted-foreground/30' :
                   'bg-primary'
                 }`} />
 

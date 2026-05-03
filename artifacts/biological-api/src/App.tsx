@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
@@ -46,7 +47,9 @@ function App() {
       <ThemeProvider defaultTheme="dark" storageKey="bio-theme">
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            <ErrorBoundary>
+              <Router />
+            </ErrorBoundary>
           </WouterRouter>
           <Toaster theme="dark" />
         </TooltipProvider>

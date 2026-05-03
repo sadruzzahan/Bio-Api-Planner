@@ -201,7 +201,7 @@ export default function Glucose() {
                   ) : postMealReadings.slice(0, 10).map(r => (
                     <div key={r.id} className="p-4 flex items-center justify-between hover:bg-accent/40 transition-colors" data-testid={`postmeal-row-${r.id}`}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-8 rounded-full ${r.valueMgdl > 140 ? "bg-yellow-500" : r.valueMgdl > 180 ? "bg-red-500" : "bg-green-500"}`} />
+                        <div className={`w-2 h-8 rounded-full ${r.valueMgdl > 180 ? "bg-red-500" : r.valueMgdl > 140 ? "bg-yellow-500" : "bg-green-500"}`} />
                         <div>
                           <div className="font-mono text-sm">{format(new Date(r.recordedAt), "MMM d, HH:mm")}</div>
                           <div className="text-xs text-muted-foreground font-mono">{r.source}</div>
