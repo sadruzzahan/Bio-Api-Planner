@@ -90,10 +90,19 @@ function Protected({
         </OnboardingGate>
       </Show>
       <Show when="signed-out">
-        <Redirect to="/sign-in" />
+        <RedirectToSignInWithReturn />
       </Show>
     </>
   );
+}
+
+function RedirectToSignInWithReturn() {
+  // Preserve the originally-requested URL so Clerk returns the operator there
+  // after a successful sign-in instead of dumping them on /dashboard.
+  const [location] = useLocation();
+  const fullPath = `${basePath}${location}${window.location.search}${window.location.hash}`;
+  const target = `/sign-in?redirect_url=${encodeURIComponent(fullPath)}`;
+  return <Redirect to={target} />;
 }
 
 function HomeRedirect() {

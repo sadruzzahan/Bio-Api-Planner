@@ -49,13 +49,36 @@ class AuthError extends Error {
   }
 }
 
-async function resolveInternalUser(clerkUserId: string): Promise<InternalUser> {
+async function resolveInternalUser(
+  clerkUserId: string,
+  claimedRole?: string,
+): Promise<InternalUser> {
   const cached = clerkIdToInternal.get(clerkUserId);
-  if (cached) return cached;
+  if (cached) {
+    // If Clerk just elevated this user to admin (or revoked it), reflect it
+    // immediately without waiting for the cache to roll over.
+    if (claimedRole && claimedRole !== cached.role) {
+      await db
+        .update(usersTable)
+        .set({ role: claimedRole })
+        .where(eq(usersTable.clerkId, clerkUserId));
+      const updated = { id: cached.id, role: claimedRole };
+      cacheSet(clerkUserId, updated);
+      return updated;
+    }
+    return cached;
+  }
 
   // Fast path: row already exists for this Clerk user.
   const existing = await findByClerkId(clerkUserId);
   if (existing) {
+    if (claimedRole && claimedRole !== existing.role) {
+      await db
+        .update(usersTable)
+        .set({ role: claimedRole })
+        .where(eq(usersTable.clerkId, clerkUserId));
+      existing.role = claimedRole;
+    }
     cacheSet(clerkUserId, existing);
     return existing;
   }
@@ -81,6 +104,14 @@ async function resolveInternalUser(clerkUserId: string): Promise<InternalUser> {
     clerkUser.username ||
     primaryEmail.split("@")[0];
 
+  // Pull role from Clerk publicMetadata when present so a freshly-promoted
+  // admin's first request lands as admin without a manual DB edit.
+  const metaRole =
+    typeof (clerkUser.publicMetadata as { role?: unknown })?.role === "string"
+      ? ((clerkUser.publicMetadata as { role: string }).role)
+      : undefined;
+  const initialRole = claimedRole ?? metaRole ?? "user";
+
   // Race-safe insert keyed on the unique clerk_id column. We deliberately do
   // NOT auto-rebind an existing row by email — that would let any signup with
   // a previously-used email take over that account's data. If the email is
@@ -94,6 +125,7 @@ async function resolveInternalUser(clerkUserId: string): Promise<InternalUser> {
         clerkId: clerkUserId,
         email: primaryEmail,
         name: displayName,
+        role: initialRole,
       })
       .onConflictDoNothing({ target: usersTable.clerkId })
       .returning({ id: usersTable.id, role: usersTable.role });
@@ -136,7 +168,21 @@ export const requireAuth: RequestHandler = async (
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    const internal = await resolveInternalUser(clerkUserId);
+    // Read role from session claims (forwarded from Clerk publicMetadata via
+    // a JWT template) when available so requests are not gated on a slow
+    // round-trip to clerkClient.users.getUser.
+    const claims = (auth as unknown as { sessionClaims?: Record<string, unknown> })
+      ?.sessionClaims;
+    const claimsMeta = (claims?.publicMetadata ?? claims?.public_metadata) as
+      | { role?: unknown }
+      | undefined;
+    const claimedRole =
+      typeof claims?.role === "string"
+        ? (claims.role as string)
+        : typeof claimsMeta?.role === "string"
+          ? (claimsMeta.role as string)
+          : undefined;
+    const internal = await resolveInternalUser(clerkUserId, claimedRole);
     req.userId = internal.id;
     req.clerkUserId = clerkUserId;
     req.userRole = internal.role;
