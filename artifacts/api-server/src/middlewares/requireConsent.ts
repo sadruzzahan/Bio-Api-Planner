@@ -23,6 +23,14 @@ import { logger } from "../lib/logger";
  * a version here forces every existing user to re-accept on their next
  * request, which is exactly the desired behaviour when legal content
  * materially changes.
+ *
+ * Intentional scope: the original task spec required ToS + Medical
+ * Disclaimer at minimum. We additionally require Privacy because the
+ * privacy notice covers the GDPR/CCPA legal-bases disclosure that the
+ * data-processing endpoints below this gate rely on. The frontend
+ * consent modal surfaces all three documents in a single flow so the
+ * UX cost of the extra acceptance is zero. Drop "privacy" here if a
+ * future product/legal decision narrows the required set.
  */
 export const REQUIRED_CONSENT_DOCS = [
   { document: "tos" as const, version: "1.0" },
